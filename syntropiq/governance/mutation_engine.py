@@ -152,7 +152,7 @@ class MutationEngine:
     def get_performance_trend(self) -> Dict:
         """Get performance trend statistics."""
         if not self.success_rates:
-            return {"avg_success_rate": 0.0, "trend": "unknown"}
+            return {"avg_success_rate": 0.0, "trend": "unknown", "cycles_tracked": 0}
         
         recent = self.success_rates[-10:]  # Last 10 cycles
         avg = sum(recent) / len(recent)
