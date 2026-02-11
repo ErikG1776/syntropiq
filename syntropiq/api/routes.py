@@ -64,19 +64,13 @@ def submit_tasks(request: TaskSubmissionRequest):
             run_id=request.run_id or "API_CYCLE"
         )
 
-        # Run mutation engine
-        mutation_result = server.mutation_engine.evaluate_and_mutate(
-            execution_results=result["results"],
-            cycle_id=result["run_id"]
-        )
-
-        # Live-sync thresholds into trust engine
-        server.governance_loop.trust_engine.trust_threshold = mutation_result["trust_threshold"]
-        server.governance_loop.trust_engine.suppression_threshold = mutation_result["suppression_threshold"]
-        server.governance_loop.trust_engine.drift_delta = mutation_result["drift_delta"]
-
         # Sync trust scores into registry
         server.agent_registry.sync_trust_scores()
+
+        # Sync server-level mutation engine state from loop's engine
+        server.mutation_engine.trust_threshold = result["mutation"]["trust_threshold"]
+        server.mutation_engine.suppression_threshold = result["mutation"]["suppression_threshold"]
+        server.mutation_engine.drift_delta = result["mutation"]["drift_delta"]
 
         return GovernanceCycleResponse(
             run_id=result["run_id"],
@@ -86,7 +80,7 @@ def submit_tasks(request: TaskSubmissionRequest):
             avg_latency=result["statistics"]["avg_latency"],
             trust_updates=result["trust_updates"],
             reflection=result["reflection"],
-            mutation=mutation_result
+            mutation=result["mutation"]
         )
 
     except Exception as e:

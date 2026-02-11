@@ -28,8 +28,8 @@ class ExecutionResult(BaseModel):
 # ✅ Loader for baseline agent pool (used if trust memory is empty)
 def default_agents() -> List[Agent]:
     return [
-        Agent(id="RuleModel", trust_score=0.64, capabilities=["fraud"], status="active"),
-        Agent(id="MLModel", trust_score=0.65, capabilities=["fraud"], status="active"),
-        Agent(id="VendorAPI", trust_score=0.68, capabilities=["fraud"], status="active"),
+        Agent(id="RuleModel", trust_score=0.82, capabilities=["fraud"], status="active"),
+        Agent(id="MLModel", trust_score=0.84, capabilities=["fraud"], status="active"),
+        Agent(id="VendorAPI", trust_score=0.80, capabilities=["fraud"], status="active"),
     ]
 

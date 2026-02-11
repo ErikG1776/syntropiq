@@ -6,8 +6,9 @@ Orchestrates the complete governance cycle:
 2. Agent assignment (Syntropiq Trust Engine)
 3. Task execution
 4. Trust score updates (Asymmetric Learning)
-5. Reflection (RIF)
-6. State persistence
+5. Threshold mutation (Claim 5)
+6. Reflection (RIF)
+7. State persistence
 """
 
 from typing import List, Dict, Any, Optional
@@ -17,6 +18,7 @@ from syntropiq.governance.prioritizer import OptimusPrioritizer
 from syntropiq.governance.trust_engine import SyntropiqTrustEngine
 from syntropiq.governance.learning_engine import update_trust_scores
 from syntropiq.governance.reflection_engine import evaluate_reflection
+from syntropiq.governance.mutation_engine import MutationEngine
 from syntropiq.persistence.state_manager import PersistentStateManager
 
 
@@ -32,8 +34,8 @@ class GovernanceLoop:
         self,
         state_manager: PersistentStateManager,
         trust_threshold: float = 0.7,
-        suppression_threshold: float = None,
-        drift_delta: float = None
+        suppression_threshold: float = 0.75,
+        drift_delta: float = 0.1
     ):
         """
         Initialize governance loop.
@@ -52,6 +54,12 @@ class GovernanceLoop:
             drift_delta=drift_delta,
             state_manager=state_manager
         )
+        self.mutation_engine = MutationEngine(
+            initial_trust_threshold=trust_threshold,
+            initial_suppression_threshold=suppression_threshold,
+            initial_drift_delta=drift_delta,
+            state_manager=state_manager
+        )
 
     def execute_cycle(
         self,
@@ -66,10 +74,11 @@ class GovernanceLoop:
         Steps:
         1. Prioritize tasks (Optimus)
         2. Assign agents (Trust-ranked with circuit breaker)
-        3. Execute tasks (FunctionExecutor by default)
+        3. Execute tasks
         4. Update trust scores (Asymmetric Learning)
-        5. Generate reflection (RIF)
-        6. Persist state to database
+        5. Mutate thresholds (Claim 5)
+        6. Generate reflection (RIF)
+        7. Persist state to database
 
         Args:
             tasks: List of task objects
@@ -113,7 +122,16 @@ class GovernanceLoop:
         for aid, new_score in trust_updates.items():
             agents[aid].trust_score = new_score
 
-        # Step 5: Generate reflection
+        # Step 5: Mutate thresholds (Claim 5)
+        mutation_result = self.mutation_engine.evaluate_and_mutate(
+            execution_results=results,
+            cycle_id=run_id
+        )
+        self.trust_engine.trust_threshold = mutation_result["trust_threshold"]
+        self.trust_engine.suppression_threshold = mutation_result["suppression_threshold"]
+        self.trust_engine.drift_delta = mutation_result["drift_delta"]
+
+        # Step 6: Generate reflection
         reflection = evaluate_reflection(
             execution_results=results,
             trust_updates=trust_updates,
@@ -121,7 +139,7 @@ class GovernanceLoop:
             run_id=run_id
         )
 
-        # Step 6: Persist state
+        # Step 7: Persist state
         self.state.update_trust_scores(trust_updates, reason=run_id)
         self.state.record_execution_results(results)
         self.state.record_reflection(reflection["reflection"], reflection)
@@ -135,6 +153,7 @@ class GovernanceLoop:
             "results": results,
             "trust_updates": trust_updates,
             "reflection": reflection,
+            "mutation": mutation_result,
             "statistics": {
                 "tasks_executed": len(results),
                 "successes": sum(1 for r in results if r.success),
