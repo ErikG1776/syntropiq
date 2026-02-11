@@ -12,7 +12,7 @@ from syntropiq.persistence.state_manager import PersistentStateManager
 from syntropiq.persistence.agent_registry import AgentRegistry
 from syntropiq.governance.loop import GovernanceLoop
 from syntropiq.governance.mutation_engine import MutationEngine
-from syntropiq.execution.function_executor import FunctionExecutor
+from syntropiq.execution.deterministic_executor import DeterministicExecutor
 
 
 # Global state (initialized on startup)
@@ -20,7 +20,7 @@ state_manager: PersistentStateManager = None
 agent_registry: AgentRegistry = None
 governance_loop: GovernanceLoop = None
 mutation_engine: MutationEngine = None
-executor: FunctionExecutor = None
+executor: DeterministicExecutor = None
 config: SyntropiqConfig = None
 
 
@@ -61,12 +61,16 @@ async def lifespan(app: FastAPI):
     mutation_engine = MutationEngine(
         initial_trust_threshold=config.governance.trust_threshold,
         initial_suppression_threshold=config.governance.suppression_threshold,
-        initial_drift_delta=config.governance.drift_detection_delta
+        initial_drift_delta=config.governance.drift_detection_delta,
+        state_manager=state_manager
     )
+    governance_loop.trust_engine.trust_threshold = mutation_engine.trust_threshold
+    governance_loop.trust_engine.suppression_threshold = mutation_engine.suppression_threshold
+    governance_loop.trust_engine.drift_delta = mutation_engine.drift_delta
     
-    # Initialize executor (default: function executor)
+    # Initialize executor (temporary: deterministic executor for testing)
     print("🔧 Initializing executor...")
-    executor = FunctionExecutor()
+    executor = DeterministicExecutor()
     
     print("\n" + "="*60)
     print("✅ Syntropiq Ready")

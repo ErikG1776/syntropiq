@@ -102,7 +102,7 @@ class AgentRegistry:
         
         return agents
     
-    def get_agents_dict(self, status: str = "active") -> Dict[str, Agent]:
+    def get_agents_dict(self, status: Optional[str] = None) -> Dict[str, Agent]:
         """
         Get agents as dictionary (required by governance loop).
         
@@ -112,7 +112,9 @@ class AgentRegistry:
         Returns:
             Dictionary of {agent_id: Agent}
         """
-        return {a.id: a for a in self.list_agents(status=status)}
+        if status:
+            return {a.id: a for a in self.list_agents(status=status)}
+        return {a.id: a for a in self.list_agents()}
     
     def update_agent_status(self, agent_id: str, status: str):
         """

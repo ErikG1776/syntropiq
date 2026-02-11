@@ -10,8 +10,11 @@ Automatically tunes governance parameters:
 - Drift detection delta (sensitivity to performance changes)
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional, TYPE_CHECKING
 from syntropiq.core.models import ExecutionResult
+
+if TYPE_CHECKING:
+    from syntropiq.persistence.state_manager import PersistentStateManager
 
 
 class MutationEngine:
@@ -28,7 +31,9 @@ class MutationEngine:
         initial_suppression_threshold: float = 0.75,
         initial_drift_delta: float = 0.1,
         mutation_rate: float = 0.05,  # How much to adjust per cycle
-        target_success_rate: float = 0.85  # Target system performance
+        target_success_rate: float = 0.85,  # Target system performance
+        state_manager: Optional["PersistentStateManager"] = None,
+        history_window: int = 100
     ):
         """
         Initialize mutation engine.
@@ -39,16 +44,37 @@ class MutationEngine:
             initial_drift_delta: Starting drift detection sensitivity
             mutation_rate: How aggressively to adjust (0.01-0.1 recommended)
             target_success_rate: Desired system success rate (0.8-0.95 recommended)
+            state_manager: Optional persistent state manager for DB-backed mutation state
+            history_window: Number of recent mutation events to load for trend continuity
         """
         self.trust_threshold = initial_trust_threshold
         self.suppression_threshold = initial_suppression_threshold
         self.drift_delta = initial_drift_delta
         self.mutation_rate = mutation_rate
         self.target_success_rate = target_success_rate
+        self.state_manager = state_manager
+        self.history_window = history_window
         
         # Performance history
         self.success_rates: List[float] = []
         self.mutation_history: List[Dict] = []
+
+        self._load_persisted_state()
+
+    def _load_persisted_state(self) -> None:
+        """Load last mutation thresholds and history from persistent storage."""
+        if not self.state_manager:
+            return
+
+        latest = self.state_manager.get_latest_mutation_thresholds()
+        if latest:
+            self.trust_threshold = latest["trust_threshold"]
+            self.suppression_threshold = latest["suppression_threshold"]
+            self.drift_delta = latest["drift_delta"]
+
+        history = self.state_manager.get_mutation_history(limit=self.history_window)
+        self.mutation_history = history
+        self.success_rates = [event["success_rate"] for event in history]
     
     def evaluate_and_mutate(
         self,
@@ -112,6 +138,15 @@ class MutationEngine:
             else:
                 self.trust_threshold = max(0.5, self.trust_threshold - self.mutation_rate * 0.5)
                 action = "MINOR LOOSENING"
+
+        # Enforce minimum safety band: suppression >= trust + 0.05
+        required_suppression = self.trust_threshold + 0.05
+        if self.suppression_threshold < required_suppression:
+            if required_suppression <= 0.95:
+                self.suppression_threshold = required_suppression
+            else:
+                self.suppression_threshold = 0.95
+                self.trust_threshold = min(self.trust_threshold, self.suppression_threshold - 0.05)
         
         # Record mutation
         mutation_record = {
@@ -123,6 +158,8 @@ class MutationEngine:
             "drift_delta": {"old": old_drift, "new": self.drift_delta}
         }
         self.mutation_history.append(mutation_record)
+        if self.state_manager:
+            self.state_manager.record_mutation_event(mutation_record)
         
         # Print mutation results
         if old_trust != self.trust_threshold:
@@ -147,6 +184,8 @@ class MutationEngine:
     
     def get_mutation_history(self, limit: int = 10) -> List[Dict]:
         """Get recent mutation events."""
+        if self.state_manager:
+            return self.state_manager.get_mutation_history(limit=limit)
         return self.mutation_history[-limit:]
     
     def get_performance_trend(self) -> Dict:

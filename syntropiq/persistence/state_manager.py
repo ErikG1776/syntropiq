@@ -75,6 +75,15 @@ class PersistentStateManager:
             )
         """)
 
+        # Agent status table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agent_status (
+                agent_id TEXT PRIMARY KEY,
+                status TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Drift history table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS drift_history (
@@ -110,6 +119,23 @@ class PersistentStateManager:
                 recursive BOOLEAN,
                 performative_flag BOOLEAN,
                 contradiction BOOLEAN,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Mutation history table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS mutation_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cycle_id TEXT NOT NULL,
+                success_rate REAL NOT NULL,
+                action TEXT NOT NULL,
+                old_trust_threshold REAL NOT NULL,
+                new_trust_threshold REAL NOT NULL,
+                old_suppression_threshold REAL NOT NULL,
+                new_suppression_threshold REAL NOT NULL,
+                old_drift_delta REAL NOT NULL,
+                new_drift_delta REAL NOT NULL,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -209,6 +235,21 @@ class PersistentStateManager:
 
         self.conn.commit()
 
+    def update_agent_status(self, agent_id: str, status: str):
+        """Persist agent lifecycle status."""
+        cursor = self.conn.cursor()
+        timestamp = datetime.now().isoformat()
+
+        cursor.execute("""
+            INSERT INTO agent_status (agent_id, status, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(agent_id) DO UPDATE SET
+                status = excluded.status,
+                updated_at = excluded.updated_at
+        """, (agent_id, status, timestamp))
+
+        self.conn.commit()
+
     def record_drift(self, agent_id: str, trust_before: float, trust_after: float):
         """Record drift detection event."""
         cursor = self.conn.cursor()
@@ -268,6 +309,96 @@ class PersistentStateManager:
         """, (limit,))
 
         return [dict(row) for row in cursor.fetchall()]
+
+    def record_mutation_event(self, mutation_record: Dict):
+        """Persist a mutation engine event."""
+        cursor = self.conn.cursor()
+        timestamp = datetime.now().isoformat()
+
+        trust = mutation_record["trust_threshold"]
+        suppression = mutation_record["suppression_threshold"]
+        drift = mutation_record["drift_delta"]
+
+        cursor.execute("""
+            INSERT INTO mutation_history (
+                cycle_id, success_rate, action,
+                old_trust_threshold, new_trust_threshold,
+                old_suppression_threshold, new_suppression_threshold,
+                old_drift_delta, new_drift_delta,
+                timestamp
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            mutation_record["cycle_id"],
+            mutation_record["success_rate"],
+            mutation_record["action"],
+            trust["old"], trust["new"],
+            suppression["old"], suppression["new"],
+            drift["old"], drift["new"],
+            timestamp
+        ))
+
+        self.conn.commit()
+
+    def get_mutation_history(self, limit: int = 10) -> List[Dict]:
+        """Get recent mutation history in chronological order."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT
+                cycle_id, success_rate, action,
+                old_trust_threshold, new_trust_threshold,
+                old_suppression_threshold, new_suppression_threshold,
+                old_drift_delta, new_drift_delta,
+                timestamp
+            FROM mutation_history
+            ORDER BY id DESC
+            LIMIT ?
+        """, (limit,))
+
+        rows = cursor.fetchall()
+        history = []
+        for row in reversed(rows):
+            history.append({
+                "cycle_id": row["cycle_id"],
+                "success_rate": row["success_rate"],
+                "action": row["action"],
+                "trust_threshold": {
+                    "old": row["old_trust_threshold"],
+                    "new": row["new_trust_threshold"]
+                },
+                "suppression_threshold": {
+                    "old": row["old_suppression_threshold"],
+                    "new": row["new_suppression_threshold"]
+                },
+                "drift_delta": {
+                    "old": row["old_drift_delta"],
+                    "new": row["new_drift_delta"]
+                },
+                "timestamp": row["timestamp"]
+            })
+        return history
+
+    def get_latest_mutation_thresholds(self) -> Optional[Dict[str, float]]:
+        """Get the latest persisted mutation thresholds."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT
+                new_trust_threshold,
+                new_suppression_threshold,
+                new_drift_delta
+            FROM mutation_history
+            ORDER BY id DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+        if not row:
+            return None
+
+        return {
+            "trust_threshold": row["new_trust_threshold"],
+            "suppression_threshold": row["new_suppression_threshold"],
+            "drift_delta": row["new_drift_delta"]
+        }
 
     def get_statistics(self) -> Dict:
         """Get governance statistics."""
