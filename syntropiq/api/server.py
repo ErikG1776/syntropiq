@@ -53,7 +53,8 @@ async def lifespan(app: FastAPI):
     print("⚙️  Initializing governance loop...")
     governance_loop = GovernanceLoop(
         state_manager=state_manager,
-        trust_threshold=config.governance.trust_threshold
+        trust_threshold=config.governance.trust_threshold,
+        routing_mode=config.governance.routing_mode
     )
     
     # Initialize mutation engine
@@ -72,6 +73,7 @@ async def lifespan(app: FastAPI):
     print("🔧 Initializing executor...")
     executor = DeterministicExecutor()
     
+    print(f"\n📡 Routing mode: {config.governance.routing_mode}")
     print("\n" + "="*60)
     print("✅ Syntropiq Ready")
     print("="*60 + "\n")

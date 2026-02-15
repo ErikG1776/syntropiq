@@ -35,7 +35,8 @@ class GovernanceLoop:
         state_manager: PersistentStateManager,
         trust_threshold: float = 0.7,
         suppression_threshold: float = 0.75,
-        drift_delta: float = 0.1
+        drift_delta: float = 0.1,
+        routing_mode: str = "deterministic"
     ):
         """
         Initialize governance loop.
@@ -45,6 +46,7 @@ class GovernanceLoop:
             trust_threshold: Minimum trust score for agent assignment
             suppression_threshold: Minimum trust triggering suppression
             drift_delta: Drift detection sensitivity
+            routing_mode: "deterministic" (top-1) or "competitive" (trust-weighted)
         """
         self.state = state_manager
         self.prioritizer = OptimusPrioritizer()
@@ -52,7 +54,8 @@ class GovernanceLoop:
             trust_threshold=trust_threshold,
             suppression_threshold=suppression_threshold,
             drift_delta=drift_delta,
-            state_manager=state_manager
+            state_manager=state_manager,
+            routing_mode=routing_mode
         )
         self.mutation_engine = MutationEngine(
             initial_trust_threshold=trust_threshold,

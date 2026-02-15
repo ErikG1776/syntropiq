@@ -17,6 +17,7 @@ class GovernanceConfig(BaseModel):
     drift_detection_delta: float = 0.1
     asymmetric_reward: float = 0.02  # η
     asymmetric_penalty: float = 0.05  # γ
+    routing_mode: str = "deterministic"  # "deterministic" | "competitive"
 
 
 class DatabaseConfig(BaseModel):
@@ -58,6 +59,7 @@ class SyntropiqConfig(BaseModel):
                 suppression_threshold=float(os.getenv("SUPPRESSION_THRESHOLD", 0.75)),
                 max_redemption_cycles=int(os.getenv("MAX_REDEMPTION_CYCLES", 4)),
                 drift_detection_delta=float(os.getenv("DRIFT_DETECTION_DELTA", 0.1)),
+                routing_mode=os.getenv("ROUTING_MODE", "deterministic"),
             ),
             database=DatabaseConfig(
                 db_path=os.getenv("DB_PATH", "governance_state.db"),

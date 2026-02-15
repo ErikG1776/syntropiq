@@ -7,6 +7,7 @@ Implements governance mechanisms:
 - Preemptive drift-based decision making
 """
 
+import random
 from typing import List, Dict, Optional, TYPE_CHECKING
 from syntropiq.core.models import Task, Agent, Assignment
 
@@ -27,7 +28,8 @@ class SyntropiqTrustEngine:
         trust_threshold: float = 0.7,
         suppression_threshold: Optional[float] = None,
         drift_delta: float = 0.1,
-        state_manager: Optional["PersistentStateManager"] = None
+        state_manager: Optional["PersistentStateManager"] = None,
+        routing_mode: str = "deterministic"
     ):
         """
         Args:
@@ -35,6 +37,7 @@ class SyntropiqTrustEngine:
             suppression_threshold: Threshold for entering suppression.
                                    Defaults to trust_threshold.
             drift_delta: Performance drop threshold for drift detection.
+            routing_mode: "deterministic" (top-1) or "competitive" (trust-weighted)
         """
         self.trust_threshold = trust_threshold
         self.suppression_threshold = (
@@ -42,6 +45,7 @@ class SyntropiqTrustEngine:
         )
         self.drift_delta = drift_delta
         self.state_manager = state_manager
+        self.routing_mode = routing_mode
 
         self.trust_history: Dict[str, List[float]] = {}
         self.suppressed_agents: Dict[str, int] = {}
@@ -174,13 +178,13 @@ class SyntropiqTrustEngine:
 
             # Prefer active agents
             if ranked_active:
-                agent = ranked_active[0]
+                agent = self._select_agent(ranked_active)
                 assignments.append(Assignment(task_id=task.id, agent_id=agent.id))
                 assigned = True
 
             # Fallback to probation for low-risk only
             elif ranked_probation and task.risk <= self.PROBATION_RISK_CEILING:
-                agent = ranked_probation[0]
+                agent = self._select_agent(ranked_probation)
                 assignments.append(Assignment(task_id=task.id, agent_id=agent.id))
                 assigned = True
 
@@ -190,6 +194,20 @@ class SyntropiqTrustEngine:
                 )
 
         return assignments
+
+    def _select_agent(self, candidates: List[Agent]) -> Agent:
+        """
+        Select an agent from candidates based on routing mode.
+
+        deterministic: Always pick the highest-trust agent (top-1).
+        competitive: Trust-weighted probabilistic selection.
+            P(agent_i) = trust_i / sum(all trust scores)
+            Higher trust still dominates, but all eligible agents execute.
+        """
+        if self.routing_mode == "competitive" and len(candidates) > 1:
+            weights = [a.trust_score for a in candidates]
+            return random.choices(candidates, weights=weights, k=1)[0]
+        return candidates[0]
 
     # ---------------------------------------------------------
     # STATUS INTROSPECTION
