@@ -5,14 +5,20 @@ Produces realistic loan applications modeled on Lending Club distributions.
 Each loan has a known outcome (defaulted or not) based on probability curves
 derived from real default rates by grade.
 
-Can also load a real Lending Club CSV if available.
+Can also load a real Lending Club CSV (curated via prepare_data.py) and
+serve loans in phase-appropriate batches for the governance demo.
 """
 
 import csv
+import os
 import random
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 from syntropiq.core.models import Task
+
+# Path to the curated sample (created by prepare_data.py)
+SAMPLE_CSV_PATH = Path(__file__).parent / "data" / "lending_club_sample.csv"
 
 
 @dataclass
@@ -301,3 +307,136 @@ def load_lending_club_csv(
                 continue
 
     return loans
+
+
+# ── Real Data Pool ───────────────────────────────────────────
+
+# Grade tiers for phase-based sampling
+_SAFE_GRADES = {"A", "B"}
+_RISKY_GRADES = {"C", "D", "E", "F", "G"}
+
+
+class RealDataPool:
+    """
+    Pool of real Lending Club loans that serves phase-appropriate batches.
+
+    Loads the curated sample CSV (from prepare_data.py) and indexes loans
+    by grade. Each call to sample_batch() draws loans matching the
+    requested risk profile, without replacement.
+
+    This is what makes the real-data demo work: the same phase structure
+    (ramp-up → stress → recovery → steady) but with actual loan outcomes
+    instead of synthetic probabilities.
+    """
+
+    def __init__(self, csv_path: str = None, seed: int = 42):
+        """
+        Args:
+            csv_path: Path to curated LC CSV. Defaults to bundled sample.
+            seed: Random seed for reproducible batch sampling.
+        """
+        self.csv_path = csv_path or str(SAMPLE_CSV_PATH)
+        self.rng = random.Random(seed)
+
+        if not os.path.exists(self.csv_path):
+            raise FileNotFoundError(
+                f"No curated data at: {self.csv_path}\n"
+                f"Run: python -m syntropiq.demo.lending.prepare_data <raw_lc.csv>"
+            )
+
+        # Load all loans
+        all_loans = load_lending_club_csv(self.csv_path, max_rows=10000)
+        if not all_loans:
+            raise ValueError(f"No valid loans in: {self.csv_path}")
+
+        # Index by risk tier
+        self._safe = [l for l in all_loans if l.grade in _SAFE_GRADES]
+        self._risky = [l for l in all_loans if l.grade in _RISKY_GRADES]
+        self._mixed = list(all_loans)
+
+        # Shuffle each pool for varied sampling
+        self.rng.shuffle(self._safe)
+        self.rng.shuffle(self._risky)
+        self.rng.shuffle(self._mixed)
+
+        # Cursors for round-robin sampling (no replacement within a pass)
+        self._safe_idx = 0
+        self._risky_idx = 0
+        self._mixed_idx = 0
+
+        # Stats
+        self.total_loans = len(all_loans)
+        self.total_defaults = sum(1 for l in all_loans if l.defaulted)
+        self.default_rate = self.total_defaults / self.total_loans
+
+    def sample_batch(
+        self,
+        batch_size: int,
+        batch_id: int,
+        risk_profile: str = "mixed",
+    ) -> List[LoanApplication]:
+        """
+        Draw a batch of real loans matching the risk profile.
+
+        Args:
+            batch_size: Number of loans to return.
+            batch_id: Used for loan ID prefix.
+            risk_profile: "mixed", "high_risk", or "low_risk"
+
+        Returns:
+            List of LoanApplication with real outcomes and re-stamped IDs.
+        """
+        if risk_profile == "high_risk":
+            pool, cursor_attr = self._risky, "_risky_idx"
+        elif risk_profile == "low_risk":
+            pool, cursor_attr = self._safe, "_safe_idx"
+        else:
+            pool, cursor_attr = self._mixed, "_mixed_idx"
+
+        if not pool:
+            # Fallback: use mixed pool if a tier is empty
+            pool, cursor_attr = self._mixed, "_mixed_idx"
+
+        cursor = getattr(self, cursor_attr)
+        batch = []
+
+        for i in range(batch_size):
+            if cursor >= len(pool):
+                # Wrap around — re-shuffle for variety
+                self.rng.shuffle(pool)
+                cursor = 0
+
+            loan = pool[cursor]
+            cursor += 1
+
+            # Re-stamp ID to match demo format while preserving all real data
+            batch.append(LoanApplication(
+                loan_id=f"LC_{batch_id:03d}_{i:03d}",
+                amount=loan.amount,
+                term_months=loan.term_months,
+                interest_rate=loan.interest_rate,
+                grade=loan.grade,
+                sub_grade=loan.sub_grade,
+                annual_income=loan.annual_income,
+                dti=loan.dti,
+                purpose=loan.purpose,
+                home_ownership=loan.home_ownership,
+                defaulted=loan.defaulted,
+            ))
+
+        setattr(self, cursor_attr, cursor)
+        return batch
+
+    @property
+    def description(self) -> str:
+        """Human-readable data source label for demo output."""
+        return (
+            f"Lending Club ({self.total_loans:,} real loans, "
+            f"{self.default_rate:.1%} default rate)"
+        )
+
+    @staticmethod
+    def is_available(csv_path: str = None) -> bool:
+        """Check if curated real data exists."""
+        path = csv_path or str(SAMPLE_CSV_PATH)
+        return os.path.exists(path)

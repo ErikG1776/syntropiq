@@ -28,7 +28,9 @@ from syntropiq.core.models import Agent
 from syntropiq.core.exceptions import CircuitBreakerTriggered
 from syntropiq.governance.loop import GovernanceLoop
 from syntropiq.persistence.state_manager import PersistentStateManager
-from syntropiq.demo.lending.data import generate_loan_batch, load_lending_club_csv
+from syntropiq.demo.lending.data import (
+    generate_loan_batch, load_lending_club_csv, RealDataPool,
+)
 from syntropiq.demo.lending.executor import LoanDecisionExecutor
 
 
@@ -184,6 +186,7 @@ def run_demo(
     output_path: str = None,
     routing_mode: str = "competitive",
     quiet: bool = False,
+    real_data: bool = False,
 ):
     """
     Run the full lending governance demo.
@@ -196,11 +199,46 @@ def run_demo(
         output_path: Optional path to write JSON results
         routing_mode: "competitive" or "deterministic"
         quiet: Suppress per-cycle output
+        real_data: Use curated real Lending Club data (from prepare_data.py)
     """
-    # Load data — phased risk profiles for demo narrative
-    if csv_path:
-        all_loans = load_lending_club_csv(csv_path, max_rows=num_cycles * batch_size)
+    # ── Data source selection ──────────────────────────────────
+    data_pool = None      # Set when using RealDataPool
+    data_source = None    # Display label
+
+    if real_data or csv_path:
+        # Real Lending Club data — phase-aware sampling from actual loans
+        try:
+            data_pool = RealDataPool(csv_path=csv_path, seed=seed)
+            data_source = data_pool.description
+        except FileNotFoundError as e:
+            print(f"\n  Error: {e}", file=sys.stderr)
+            print(f"\n  To prepare real data:", file=sys.stderr)
+            print(f"    1. Download LC CSV from Kaggle", file=sys.stderr)
+            print(f"    2. python -m syntropiq.demo.lending.prepare_data <csv>",
+                  file=sys.stderr)
+            print(f"\n  Falling back to synthetic data.\n", file=sys.stderr)
+            data_pool = None
+
+    if data_pool:
+        # Build phased batches from real loan pool
+        all_loans = []
+        for batch_id in range(num_cycles):
+            pct = batch_id / num_cycles
+            if pct < 0.20:
+                profile = "mixed"
+            elif pct < 0.55:
+                profile = "high_risk"
+            elif pct < 0.75:
+                profile = "low_risk"
+            else:
+                profile = "mixed"
+            all_loans.extend(
+                data_pool.sample_batch(batch_size, batch_id=batch_id,
+                                       risk_profile=profile)
+            )
     else:
+        # Synthetic data — same phased structure
+        data_source = "Synthetic (LC distributions)"
         all_loans = []
         for batch_id in range(num_cycles):
             pct = batch_id / num_cycles
@@ -253,7 +291,7 @@ def run_demo(
         print(f"\n  Config: {num_cycles} cycles, {batch_size} loans/cycle, "
               f"mode={routing_mode}")
         print(f"  Drift agent: {DRIFT_AGENT} (starts drifting at cycle 3)")
-        print(f"  Data source: {'Lending Club CSV' if csv_path else 'Synthetic (LC distributions)'}")
+        print(f"  Data source: {data_source}")
 
     # Collect full timeline for JSON output
     timeline = []
@@ -447,6 +485,7 @@ def run_demo(
             "num_cycles": num_cycles,
             "batch_size": batch_size,
             "routing_mode": routing_mode,
+            "data_source": data_source,
             "drift_agent": DRIFT_AGENT,
             "drift_rate": executor.drift_rate,
             "drift_start_cycle": executor.drift_start_cycle,
@@ -483,7 +522,9 @@ def main():
     parser.add_argument("--seed", type=int, default=2024,
                         help="Random seed (default: 2024)")
     parser.add_argument("--csv", type=str, default=None,
-                        help="Path to Lending Club CSV file")
+                        help="Path to Lending Club CSV (raw or curated)")
+    parser.add_argument("--real-data", action="store_true",
+                        help="Use curated real LC data (from prepare_data.py)")
     parser.add_argument("--output", type=str, default=None,
                         help="Path to write JSON results")
     parser.add_argument("--mode", choices=["competitive", "deterministic"],
@@ -502,6 +543,7 @@ def main():
         output_path=args.output,
         routing_mode=args.mode,
         quiet=args.quiet,
+        real_data=args.real_data,
     )
 
 
