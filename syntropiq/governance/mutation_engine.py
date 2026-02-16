@@ -125,18 +125,18 @@ class MutationEngine:
             
         elif delta > 0.05:  # Significantly above target
             # System performing well - DECREASE thresholds (more aggressive)
-            self.trust_threshold = max(0.5, self.trust_threshold - self.mutation_rate)
-            self.suppression_threshold = max(0.6, self.suppression_threshold - self.mutation_rate)
+            self.trust_threshold = max(0.55, self.trust_threshold - self.mutation_rate)
+            self.suppression_threshold = max(0.78, self.suppression_threshold - self.mutation_rate)
             self.drift_delta = max(0.05, self.drift_delta - 0.02)
             action = "LOOSENING (excellent performance)"
-            
+
         else:
             # Performance near target - minor adjustments
             if delta < 0:
                 self.trust_threshold = min(0.95, self.trust_threshold + self.mutation_rate * 0.5)
                 action = "MINOR TIGHTENING"
             else:
-                self.trust_threshold = max(0.5, self.trust_threshold - self.mutation_rate * 0.5)
+                self.trust_threshold = max(0.55, self.trust_threshold - self.mutation_rate * 0.5)
                 action = "MINOR LOOSENING"
 
         # Enforce minimum safety band: suppression >= trust + 0.05

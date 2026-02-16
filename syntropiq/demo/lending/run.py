@@ -48,19 +48,19 @@ def create_agents() -> Dict[str, Agent]:
     return {
         "conservative": Agent(
             id="conservative",
-            trust_score=0.80,
+            trust_score=0.90,
             capabilities=["underwriting"],
             status="active",
         ),
         "balanced": Agent(
             id="balanced",
-            trust_score=0.81,
+            trust_score=0.88,
             capabilities=["underwriting"],
             status="active",
         ),
         "growth": Agent(
             id="growth",
-            trust_score=0.83,
+            trust_score=0.86,
             capabilities=["underwriting"],
             status="active",
         ),
@@ -111,10 +111,10 @@ def format_execution_summary(result: Dict[str, Any]):
 
     print(f"\n  Execution: {ok}/{total} correct ({rate:.0%})")
 
-    # Show notable decisions
+    # Show notable decisions (both data defaults and OOD miscalibration defaults)
     bad_approvals = [
         r for r in result["results"]
-        if r.metadata.get("outcome") == "DEFAULTED"
+        if r.metadata.get("outcome", "").startswith("DEFAULTED")
     ]
     if bad_approvals:
         total_loss = sum(r.metadata.get("loan_amount", 0) for r in bad_approvals)
@@ -229,8 +229,10 @@ def run_demo(
         routing_mode=routing_mode,
     )
     # Financial services: slow threshold adaptation (conservative governance)
-    loop.mutation_engine.mutation_rate = 0.02
+    loop.mutation_engine.mutation_rate = 0.015
     loop.mutation_engine.target_success_rate = 0.90
+    # Extended suppression window — once flagged, agents must prove recovery
+    loop.trust_engine.MAX_REDEMPTION_CYCLES = 20
 
     # Reproducible routing decisions
     import random as _rng
@@ -240,7 +242,7 @@ def run_demo(
     executor = LoanDecisionExecutor(
         agent_profiles=dict(AGENT_PROFILES),
         drift_agent_id=DRIFT_AGENT,
-        drift_rate=0.03,       # +0.03 per cycle — visible drift
+        drift_rate=0.04,       # +0.04 per cycle — visible drift
         drift_start_cycle=3,   # Starts drifting at cycle 3
     )
 
@@ -301,12 +303,23 @@ def run_demo(
                 "failures": result["statistics"]["failures"],
                 "bad_approvals": sum(
                     1 for r in result["results"]
-                    if r.metadata.get("outcome") == "DEFAULTED"
+                    if r.metadata.get("outcome", "").startswith("DEFAULTED")
                 ),
                 "potential_loss": sum(
                     r.metadata.get("loan_amount", 0)
                     for r in result["results"]
-                    if r.metadata.get("outcome") == "DEFAULTED"
+                    if r.metadata.get("outcome", "").startswith("DEFAULTED")
+                ),
+                "drift_agent_loss": sum(
+                    r.metadata.get("loan_amount", 0)
+                    for r in result["results"]
+                    if r.metadata.get("outcome", "").startswith("DEFAULTED")
+                    and r.agent_id == DRIFT_AGENT
+                ),
+                "drift_agent_bad": sum(
+                    1 for r in result["results"]
+                    if r.metadata.get("outcome", "").startswith("DEFAULTED")
+                    and r.agent_id == DRIFT_AGENT
                 ),
                 "decisions": [
                     {
@@ -362,19 +375,55 @@ def run_demo(
         total_bad = sum(t.get("bad_approvals", 0) for t in timeline)
         total_loss = sum(t.get("potential_loss", 0) for t in timeline)
 
-        print(f"\n  Summary:")
-        print(f"    Cycles executed:     {executed}/{num_cycles}")
-        print(f"    Circuit breaker:     {cb_trips} trips")
-        print(f"    Bad approvals:       {total_bad}")
-        print(f"    Potential loss:      ${total_loss:,.0f}")
+        # Track drift-agent-specific losses vs background (other agents)
+        drift_bad = sum(t.get("drift_agent_bad", 0) for t in timeline)
+        drift_loss = sum(t.get("drift_agent_loss", 0) for t in timeline)
+        background_bad = total_bad - drift_bad
+        background_loss = total_loss - drift_loss
 
-        # Governance events summary
         suppression_cycles = [
             t["cycle"] for t in timeline
             if t.get("suppressed_agents")
         ]
+        first_suppression = suppression_cycles[0] if suppression_cycles else num_cycles
+
+        # Drift agent losses before vs after suppression
+        drift_loss_before = sum(
+            t.get("drift_agent_loss", 0) for t in timeline
+            if t.get("cycle", 0) < first_suppression and t.get("status") == "executed"
+        )
+        drift_bad_before = sum(
+            t.get("drift_agent_bad", 0) for t in timeline
+            if t.get("cycle", 0) < first_suppression and t.get("status") == "executed"
+        )
+        drift_loss_after = drift_loss - drift_loss_before
+
+        # Estimate prevented: project drift agent's loss rate across remaining cycles
+        cycles_before = max(1, first_suppression)
+        cycles_after = max(1, executed - first_suppression)
+        drift_rate_before = drift_loss_before / cycles_before
+        projected_drift_loss = drift_rate_before * cycles_after
+        prevented_loss = max(0, projected_drift_loss - drift_loss_after)
+
+        print(f"\n  Summary:")
+        print(f"    Cycles executed:     {executed}/{num_cycles}")
+        if cb_trips:
+            print(f"    Circuit breaker:     {cb_trips} trips")
+        print(f"    Bad approvals:       {total_bad}")
+        print(f"    Potential loss:      ${total_loss:,.0f}")
         if suppression_cycles:
-            print(f"    Suppression active:  cycles {suppression_cycles[0]}-{suppression_cycles[-1]}")
+            print(f"    Suppression active:  cycles {suppression_cycles[0] + 1}-{suppression_cycles[-1] + 1}")
+
+        print(f"\n  Governance Impact:")
+        print(f"    Drift-caused failures: {drift_bad} bad approvals — ${drift_loss:,.0f}")
+        if suppression_cycles:
+            print(f"    Before suppression:    {drift_bad_before} failures — ${drift_loss_before:,.0f}")
+            print(f"    After suppression:     {drift_bad - drift_bad_before} failures — ${drift_loss_after:,.0f}")
+            print(f"    Projected w/o gov:     ${projected_drift_loss:,.0f}")
+            print(f"    ── PREVENTED:          ${prevented_loss:,.0f}")
+        if background_bad:
+            print(f"    Background defaults:   {background_bad} (normal market losses, not drift)")
+
 
         db_stats = state.get_statistics()
         print(f"\n  Database:")
@@ -387,8 +436,8 @@ def run_demo(
               f"{AGENT_PROFILES[DRIFT_AGENT]:.2f} to "
               f"{executor.get_tolerance(DRIFT_AGENT):.2f}.")
         print(f"    Syntropiq detected the resulting failures, suppressed the agent,")
-        print(f"    and rerouted decisions to trusted agents — preventing losses")
-        print(f"    BEFORE they reached production.")
+        print(f"    and rerouted decisions to trusted agents — preventing an estimated")
+        print(f"    ${prevented_loss:,.0f} in additional losses.")
 
     # ── Write JSON output ─────────────────────────────────────
 

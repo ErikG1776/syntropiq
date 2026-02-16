@@ -14,7 +14,9 @@ def update_trust_scores(
         if agent_id not in agents:
             continue
 
-        current_score = agents[agent_id].trust_score
+        # Use running score if we've already processed a result for this agent,
+        # so all results within a cycle accumulate (not just the last one)
+        current_score = new_scores.get(agent_id, agents[agent_id].trust_score)
 
         if success:
             updated = min(1.0, current_score + 0.02)
