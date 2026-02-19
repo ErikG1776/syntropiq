@@ -22,6 +22,7 @@ class SyntropiqTrustEngine:
 
     MAX_REDEMPTION_CYCLES = 4
     PROBATION_RISK_CEILING = 0.4
+    PROBATION_TASK_QUOTA = 2  # Low-risk tasks per cycle for redemption
 
     def __init__(
         self,
@@ -173,16 +174,30 @@ class SyntropiqTrustEngine:
             reverse=True
         )
 
+        # Redemption requires work: reserve low-risk tasks for probation agents
+        # so they can earn trust back. Without this, active agents consume
+        # everything and suppressed agents can never recover.
+        probation_assigned = 0
+
         for task in tasks:
             assigned = False
 
-            # Prefer active agents
-            if ranked_active:
+            # Route low-risk tasks to probation agents for redemption
+            if (ranked_probation
+                    and task.risk <= self.PROBATION_RISK_CEILING
+                    and probation_assigned < self.PROBATION_TASK_QUOTA):
+                agent = self._select_agent(ranked_probation)
+                assignments.append(Assignment(task_id=task.id, agent_id=agent.id))
+                probation_assigned += 1
+                assigned = True
+
+            # Active agents handle everything else
+            elif ranked_active:
                 agent = self._select_agent(ranked_active)
                 assignments.append(Assignment(task_id=task.id, agent_id=agent.id))
                 assigned = True
 
-            # Fallback to probation for low-risk only
+            # Last resort: probation for remaining low-risk
             elif ranked_probation and task.risk <= self.PROBATION_RISK_CEILING:
                 agent = self._select_agent(ranked_probation)
                 assignments.append(Assignment(task_id=task.id, agent_id=agent.id))
