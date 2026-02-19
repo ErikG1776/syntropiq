@@ -20,10 +20,16 @@ default rate is higher than the historical average for that grade. This
 concentrates failures on the drifting agent specifically.
 """
 
+import hashlib
 import time
 from typing import Dict, Optional
 from syntropiq.core.models import Task, Agent, ExecutionResult
 from syntropiq.execution.base import BaseExecutor
+
+
+def _stable_hash(s: str) -> int:
+    """Deterministic hash — Python's hash() is randomized per process."""
+    return int(hashlib.md5(s.encode()).hexdigest(), 16)
 
 
 class LoanDecisionExecutor(BaseExecutor):
@@ -113,7 +119,7 @@ class LoanDecisionExecutor(BaseExecutor):
                 # Severe miscalibration: rate scales with overreach distance
                 # At 0.10 overreach: 30% failure. At 0.25+: 65% failure.
                 miscal_rate = min(0.65, overreach * 3.0)
-                hash_val = hash(f"{task.id}_{agent.id}") % 1000
+                hash_val = _stable_hash(f"{task.id}_{agent.id}") % 1000
                 if hash_val < miscal_rate * 1000:
                     defaulted = True
                     miscalibrated = True
