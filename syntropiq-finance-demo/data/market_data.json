@@ -1,0 +1,2950 @@
+{
+  "summary": {
+    "period": "2021-01-04 to 2022-12-30",
+    "total_weeks": 104,
+    "regime_shift_week": 53,
+    "tickers": [
+      "QQQ",
+      "TLT",
+      "SPY",
+      "AGG",
+      "XLF"
+    ],
+    "benchmark_composition": "60% SPY + 40% AGG",
+    "starting_portfolio": 10000000,
+    "bull_phase": {
+      "weeks": "1-52",
+      "ticker_returns": {
+        "QQQ": 0.3706,
+        "TLT": -0.1657,
+        "SPY": 0.1975,
+        "AGG": -0.0042,
+        "XLF": 0.2156
+      }
+    },
+    "stress_phase": {
+      "weeks": "53-104",
+      "ticker_returns": {
+        "QQQ": -0.4037,
+        "TLT": 0.1678,
+        "SPY": -0.1094,
+        "AGG": 0.0683,
+        "XLF": -0.2136
+      }
+    }
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "date": "2021-01-04",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 318.18,
+          "weekly_return": 0.017591
+        },
+        "TLT": {
+          "price": 156.7,
+          "weekly_return": -0.004864
+        },
+        "SPY": {
+          "price": 378.87,
+          "weekly_return": 0.009496
+        },
+        "AGG": {
+          "price": 117.83,
+          "weekly_return": 0.000115
+        },
+        "XLF": {
+          "price": 29.08,
+          "weekly_return": 0.014927
+        }
+      },
+      "benchmark_return": 0.005744
+    },
+    {
+      "week": 2,
+      "date": "2021-01-11",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 317.79,
+          "weekly_return": -0.001218
+        },
+        "TLT": {
+          "price": 155.7,
+          "weekly_return": -0.00641
+        },
+        "SPY": {
+          "price": 379.71,
+          "weekly_return": 0.002214
+        },
+        "AGG": {
+          "price": 117.68,
+          "weekly_return": -0.001272
+        },
+        "XLF": {
+          "price": 29.33,
+          "weekly_return": 0.008669
+        }
+      },
+      "benchmark_return": 0.00082
+    },
+    {
+      "week": 3,
+      "date": "2021-01-18",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 319.29,
+          "weekly_return": 0.004707
+        },
+        "TLT": {
+          "price": 154.92,
+          "weekly_return": -0.004977
+        },
+        "SPY": {
+          "price": 380.77,
+          "weekly_return": 0.002788
+        },
+        "AGG": {
+          "price": 117.64,
+          "weekly_return": -0.000369
+        },
+        "XLF": {
+          "price": 29.22,
+          "weekly_return": -0.003784
+        }
+      },
+      "benchmark_return": 0.001525
+    },
+    {
+      "week": 4,
+      "date": "2021-01-25",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 322.83,
+          "weekly_return": 0.0111
+        },
+        "TLT": {
+          "price": 152.58,
+          "weekly_return": -0.015148
+        },
+        "SPY": {
+          "price": 383.44,
+          "weekly_return": 0.00701
+        },
+        "AGG": {
+          "price": 117.06,
+          "weekly_return": -0.00497
+        },
+        "XLF": {
+          "price": 29.52,
+          "weekly_return": 0.010146
+        }
+      },
+      "benchmark_return": 0.002218
+    },
+    {
+      "week": 5,
+      "date": "2021-02-01",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 321.18,
+          "weekly_return": -0.005109
+        },
+        "TLT": {
+          "price": 152.77,
+          "weekly_return": 0.001291
+        },
+        "SPY": {
+          "price": 383.88,
+          "weekly_return": 0.001149
+        },
+        "AGG": {
+          "price": 117.2,
+          "weekly_return": 0.001272
+        },
+        "XLF": {
+          "price": 29.56,
+          "weekly_return": 0.001637
+        }
+      },
+      "benchmark_return": 0.001198
+    },
+    {
+      "week": 6,
+      "date": "2021-02-08",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 322.64,
+          "weekly_return": 0.00454
+        },
+        "TLT": {
+          "price": 152.97,
+          "weekly_return": 0.001267
+        },
+        "SPY": {
+          "price": 384.4,
+          "weekly_return": 0.001344
+        },
+        "AGG": {
+          "price": 117.41,
+          "weekly_return": 0.001793
+        },
+        "XLF": {
+          "price": 29.51,
+          "weekly_return": -0.001933
+        }
+      },
+      "benchmark_return": 0.001524
+    },
+    {
+      "week": 7,
+      "date": "2021-02-15",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 327.04,
+          "weekly_return": 0.013647
+        },
+        "TLT": {
+          "price": 151.8,
+          "weekly_return": -0.007628
+        },
+        "SPY": {
+          "price": 388.86,
+          "weekly_return": 0.011601
+        },
+        "AGG": {
+          "price": 117.4,
+          "weekly_return": -0.000114
+        },
+        "XLF": {
+          "price": 29.7,
+          "weekly_return": 0.006643
+        }
+      },
+      "benchmark_return": 0.006915
+    },
+    {
+      "week": 8,
+      "date": "2021-02-22",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 330.7,
+          "weekly_return": 0.011185
+        },
+        "TLT": {
+          "price": 151.95,
+          "weekly_return": 0.000971
+        },
+        "SPY": {
+          "price": 391.94,
+          "weekly_return": 0.007917
+        },
+        "AGG": {
+          "price": 117.75,
+          "weekly_return": 0.003005
+        },
+        "XLF": {
+          "price": 29.88,
+          "weekly_return": 0.006074
+        }
+      },
+      "benchmark_return": 0.005952
+    },
+    {
+      "week": 9,
+      "date": "2021-03-01",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 327.28,
+          "weekly_return": -0.010336
+        },
+        "TLT": {
+          "price": 151.51,
+          "weekly_return": -0.002882
+        },
+        "SPY": {
+          "price": 388.81,
+          "weekly_return": -0.007983
+        },
+        "AGG": {
+          "price": 117.61,
+          "weekly_return": -0.001221
+        },
+        "XLF": {
+          "price": 29.98,
+          "weekly_return": 0.003342
+        }
+      },
+      "benchmark_return": -0.005278
+    },
+    {
+      "week": 10,
+      "date": "2021-03-08",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 331.25,
+          "weekly_return": 0.012113
+        },
+        "TLT": {
+          "price": 149.77,
+          "weekly_return": -0.011494
+        },
+        "SPY": {
+          "price": 391.74,
+          "weekly_return": 0.007541
+        },
+        "AGG": {
+          "price": 117.21,
+          "weekly_return": -0.003415
+        },
+        "XLF": {
+          "price": 30.19,
+          "weekly_return": 0.006876
+        }
+      },
+      "benchmark_return": 0.003159
+    },
+    {
+      "week": 11,
+      "date": "2021-03-15",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 333.99,
+          "weekly_return": 0.008266
+        },
+        "TLT": {
+          "price": 150.52,
+          "weekly_return": 0.005031
+        },
+        "SPY": {
+          "price": 391.56,
+          "weekly_return": -0.000449
+        },
+        "AGG": {
+          "price": 117.55,
+          "weekly_return": 0.002906
+        },
+        "XLF": {
+          "price": 30.39,
+          "weekly_return": 0.006737
+        }
+      },
+      "benchmark_return": 0.000893
+    },
+    {
+      "week": 12,
+      "date": "2021-03-22",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 337.82,
+          "weekly_return": 0.011489
+        },
+        "TLT": {
+          "price": 148.66,
+          "weekly_return": -0.012406
+        },
+        "SPY": {
+          "price": 392.96,
+          "weekly_return": 0.003575
+        },
+        "AGG": {
+          "price": 117.2,
+          "weekly_return": -0.002959
+        },
+        "XLF": {
+          "price": 30.63,
+          "weekly_return": 0.007903
+        }
+      },
+      "benchmark_return": 0.000961
+    },
+    {
+      "week": 13,
+      "date": "2021-03-29",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 340.39,
+          "weekly_return": 0.007601
+        },
+        "TLT": {
+          "price": 148.16,
+          "weekly_return": -0.003342
+        },
+        "SPY": {
+          "price": 395.25,
+          "weekly_return": 0.005819
+        },
+        "AGG": {
+          "price": 117.21,
+          "weekly_return": 4.3e-05
+        },
+        "XLF": {
+          "price": 30.81,
+          "weekly_return": 0.005739
+        }
+      },
+      "benchmark_return": 0.003509
+    },
+    {
+      "week": 14,
+      "date": "2021-04-05",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 343.51,
+          "weekly_return": 0.009163
+        },
+        "TLT": {
+          "price": 148.53,
+          "weekly_return": 0.00248
+        },
+        "SPY": {
+          "price": 399.45,
+          "weekly_return": 0.010638
+        },
+        "AGG": {
+          "price": 117.34,
+          "weekly_return": 0.00113
+        },
+        "XLF": {
+          "price": 30.96,
+          "weekly_return": 0.00492
+        }
+      },
+      "benchmark_return": 0.006835
+    },
+    {
+      "week": 15,
+      "date": "2021-04-12",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 345.62,
+          "weekly_return": 0.006126
+        },
+        "TLT": {
+          "price": 148.44,
+          "weekly_return": -0.000575
+        },
+        "SPY": {
+          "price": 400.82,
+          "weekly_return": 0.003433
+        },
+        "AGG": {
+          "price": 117.24,
+          "weekly_return": -0.000825
+        },
+        "XLF": {
+          "price": 31.12,
+          "weekly_return": 0.005106
+        }
+      },
+      "benchmark_return": 0.00173
+    },
+    {
+      "week": 16,
+      "date": "2021-04-19",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 346.96,
+          "weekly_return": 0.003896
+        },
+        "TLT": {
+          "price": 147.79,
+          "weekly_return": -0.004363
+        },
+        "SPY": {
+          "price": 401.17,
+          "weekly_return": 0.000851
+        },
+        "AGG": {
+          "price": 117.04,
+          "weekly_return": -0.001749
+        },
+        "XLF": {
+          "price": 31.3,
+          "weekly_return": 0.005984
+        }
+      },
+      "benchmark_return": -0.000189
+    },
+    {
+      "week": 17,
+      "date": "2021-04-26",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 352.81,
+          "weekly_return": 0.016844
+        },
+        "TLT": {
+          "price": 147.7,
+          "weekly_return": -0.000627
+        },
+        "SPY": {
+          "price": 404.16,
+          "weekly_return": 0.007474
+        },
+        "AGG": {
+          "price": 117.0,
+          "weekly_return": -0.000351
+        },
+        "XLF": {
+          "price": 31.65,
+          "weekly_return": 0.010986
+        }
+      },
+      "benchmark_return": 0.004344
+    },
+    {
+      "week": 18,
+      "date": "2021-05-03",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 359.21,
+          "weekly_return": 0.01816
+        },
+        "TLT": {
+          "price": 147.02,
+          "weekly_return": -0.004582
+        },
+        "SPY": {
+          "price": 407.81,
+          "weekly_return": 0.009025
+        },
+        "AGG": {
+          "price": 116.72,
+          "weekly_return": -0.002331
+        },
+        "XLF": {
+          "price": 32.04,
+          "weekly_return": 0.01254
+        }
+      },
+      "benchmark_return": 0.004483
+    },
+    {
+      "week": 19,
+      "date": "2021-05-10",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 360.59,
+          "weekly_return": 0.003826
+        },
+        "TLT": {
+          "price": 146.18,
+          "weekly_return": -0.005712
+        },
+        "SPY": {
+          "price": 407.66,
+          "weekly_return": -0.00038
+        },
+        "AGG": {
+          "price": 116.88,
+          "weekly_return": 0.001311
+        },
+        "XLF": {
+          "price": 31.64,
+          "weekly_return": -0.012765
+        }
+      },
+      "benchmark_return": 0.000296
+    },
+    {
+      "week": 20,
+      "date": "2021-05-17",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 357.93,
+          "weekly_return": -0.007371
+        },
+        "TLT": {
+          "price": 146.53,
+          "weekly_return": 0.002397
+        },
+        "SPY": {
+          "price": 403.64,
+          "weekly_return": -0.009865
+        },
+        "AGG": {
+          "price": 117.03,
+          "weekly_return": 0.001291
+        },
+        "XLF": {
+          "price": 30.91,
+          "weekly_return": -0.022819
+        }
+      },
+      "benchmark_return": -0.005403
+    },
+    {
+      "week": 21,
+      "date": "2021-05-24",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 364.68,
+          "weekly_return": 0.018855
+        },
+        "TLT": {
+          "price": 144.81,
+          "weekly_return": -0.011773
+        },
+        "SPY": {
+          "price": 406.84,
+          "weekly_return": 0.007937
+        },
+        "AGG": {
+          "price": 116.49,
+          "weekly_return": -0.004577
+        },
+        "XLF": {
+          "price": 31.07,
+          "weekly_return": 0.00504
+        }
+      },
+      "benchmark_return": 0.002931
+    },
+    {
+      "week": 22,
+      "date": "2021-05-31",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 371.86,
+          "weekly_return": 0.019683
+        },
+        "TLT": {
+          "price": 144.28,
+          "weekly_return": -0.003657
+        },
+        "SPY": {
+          "price": 411.44,
+          "weekly_return": 0.011308
+        },
+        "AGG": {
+          "price": 116.37,
+          "weekly_return": -0.001033
+        },
+        "XLF": {
+          "price": 31.27,
+          "weekly_return": 0.006287
+        }
+      },
+      "benchmark_return": 0.006372
+    },
+    {
+      "week": 23,
+      "date": "2021-06-07",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 375.21,
+          "weekly_return": 0.009009
+        },
+        "TLT": {
+          "price": 143.55,
+          "weekly_return": -0.005078
+        },
+        "SPY": {
+          "price": 410.74,
+          "weekly_return": -0.001707
+        },
+        "AGG": {
+          "price": 116.45,
+          "weekly_return": 0.000674
+        },
+        "XLF": {
+          "price": 31.56,
+          "weekly_return": 0.009521
+        }
+      },
+      "benchmark_return": -0.000755
+    },
+    {
+      "week": 24,
+      "date": "2021-06-14",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 378.2,
+          "weekly_return": 0.007972
+        },
+        "TLT": {
+          "price": 143.43,
+          "weekly_return": -0.000846
+        },
+        "SPY": {
+          "price": 411.73,
+          "weekly_return": 0.002416
+        },
+        "AGG": {
+          "price": 116.67,
+          "weekly_return": 0.001927
+        },
+        "XLF": {
+          "price": 31.67,
+          "weekly_return": 0.003547
+        }
+      },
+      "benchmark_return": 0.00222
+    },
+    {
+      "week": 25,
+      "date": "2021-06-21",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 376.76,
+          "weekly_return": -0.003796
+        },
+        "TLT": {
+          "price": 142.49,
+          "weekly_return": -0.006538
+        },
+        "SPY": {
+          "price": 411.16,
+          "weekly_return": -0.001373
+        },
+        "AGG": {
+          "price": 116.66,
+          "weekly_return": -9.6e-05
+        },
+        "XLF": {
+          "price": 31.27,
+          "weekly_return": -0.012729
+        }
+      },
+      "benchmark_return": -0.000862
+    },
+    {
+      "week": 26,
+      "date": "2021-06-28",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 382.35,
+          "weekly_return": 0.014828
+        },
+        "TLT": {
+          "price": 143.19,
+          "weekly_return": 0.004901
+        },
+        "SPY": {
+          "price": 415.16,
+          "weekly_return": 0.009724
+        },
+        "AGG": {
+          "price": 116.88,
+          "weekly_return": 0.001889
+        },
+        "XLF": {
+          "price": 31.69,
+          "weekly_return": 0.013282
+        }
+      },
+      "benchmark_return": 0.00659
+    },
+    {
+      "week": 27,
+      "date": "2021-07-05",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 379.42,
+          "weekly_return": -0.007669
+        },
+        "TLT": {
+          "price": 142.16,
+          "weekly_return": -0.007154
+        },
+        "SPY": {
+          "price": 414.4,
+          "weekly_return": -0.00183
+        },
+        "AGG": {
+          "price": 116.92,
+          "weekly_return": 0.000311
+        },
+        "XLF": {
+          "price": 31.62,
+          "weekly_return": -0.002261
+        }
+      },
+      "benchmark_return": -0.000974
+    },
+    {
+      "week": 28,
+      "date": "2021-07-12",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 379.52,
+          "weekly_return": 0.000278
+        },
+        "TLT": {
+          "price": 141.82,
+          "weekly_return": -0.002417
+        },
+        "SPY": {
+          "price": 414.22,
+          "weekly_return": -0.000445
+        },
+        "AGG": {
+          "price": 116.95,
+          "weekly_return": 0.000276
+        },
+        "XLF": {
+          "price": 31.68,
+          "weekly_return": 0.001902
+        }
+      },
+      "benchmark_return": -0.000157
+    },
+    {
+      "week": 29,
+      "date": "2021-07-19",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 384.07,
+          "weekly_return": 0.011988
+        },
+        "TLT": {
+          "price": 141.33,
+          "weekly_return": -0.003452
+        },
+        "SPY": {
+          "price": 418.25,
+          "weekly_return": 0.009737
+        },
+        "AGG": {
+          "price": 117.21,
+          "weekly_return": 0.002215
+        },
+        "XLF": {
+          "price": 31.63,
+          "weekly_return": -0.001319
+        }
+      },
+      "benchmark_return": 0.006728
+    },
+    {
+      "week": 30,
+      "date": "2021-07-26",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 384.37,
+          "weekly_return": 0.000778
+        },
+        "TLT": {
+          "price": 140.64,
+          "weekly_return": -0.004859
+        },
+        "SPY": {
+          "price": 418.84,
+          "weekly_return": 0.001412
+        },
+        "AGG": {
+          "price": 117.15,
+          "weekly_return": -0.000539
+        },
+        "XLF": {
+          "price": 31.81,
+          "weekly_return": 0.005582
+        }
+      },
+      "benchmark_return": 0.000632
+    },
+    {
+      "week": 31,
+      "date": "2021-08-02",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 392.56,
+          "weekly_return": 0.021318
+        },
+        "TLT": {
+          "price": 141.22,
+          "weekly_return": 0.00411
+        },
+        "SPY": {
+          "price": 423.15,
+          "weekly_return": 0.010277
+        },
+        "AGG": {
+          "price": 117.42,
+          "weekly_return": 0.002351
+        },
+        "XLF": {
+          "price": 32.31,
+          "weekly_return": 0.015739
+        }
+      },
+      "benchmark_return": 0.007107
+    },
+    {
+      "week": 32,
+      "date": "2021-08-09",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 402.85,
+          "weekly_return": 0.026192
+        },
+        "TLT": {
+          "price": 139.92,
+          "weekly_return": -0.009182
+        },
+        "SPY": {
+          "price": 428.82,
+          "weekly_return": 0.013408
+        },
+        "AGG": {
+          "price": 117.39,
+          "weekly_return": -0.000272
+        },
+        "XLF": {
+          "price": 32.68,
+          "weekly_return": 0.0113
+        }
+      },
+      "benchmark_return": 0.007936
+    },
+    {
+      "week": 33,
+      "date": "2021-08-16",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 403.16,
+          "weekly_return": 0.000781
+        },
+        "TLT": {
+          "price": 139.88,
+          "weekly_return": -0.000311
+        },
+        "SPY": {
+          "price": 429.33,
+          "weekly_return": 0.001194
+        },
+        "AGG": {
+          "price": 117.45,
+          "weekly_return": 0.00049
+        },
+        "XLF": {
+          "price": 32.81,
+          "weekly_return": 0.00405
+        }
+      },
+      "benchmark_return": 0.000912
+    },
+    {
+      "week": 34,
+      "date": "2021-08-23",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 405.87,
+          "weekly_return": 0.006707
+        },
+        "TLT": {
+          "price": 140.15,
+          "weekly_return": 0.001913
+        },
+        "SPY": {
+          "price": 433.41,
+          "weekly_return": 0.009505
+        },
+        "AGG": {
+          "price": 117.57,
+          "weekly_return": 0.000997
+        },
+        "XLF": {
+          "price": 33.2,
+          "weekly_return": 0.011942
+        }
+      },
+      "benchmark_return": 0.006102
+    },
+    {
+      "week": 35,
+      "date": "2021-08-30",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 408.98,
+          "weekly_return": 0.007685
+        },
+        "TLT": {
+          "price": 139.75,
+          "weekly_return": -0.002869
+        },
+        "SPY": {
+          "price": 433.9,
+          "weekly_return": 0.001125
+        },
+        "AGG": {
+          "price": 117.57,
+          "weekly_return": 5.9e-05
+        },
+        "XLF": {
+          "price": 33.06,
+          "weekly_return": -0.004287
+        }
+      },
+      "benchmark_return": 0.000699
+    },
+    {
+      "week": 36,
+      "date": "2021-09-06",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 407.55,
+          "weekly_return": -0.00351
+        },
+        "TLT": {
+          "price": 139.88,
+          "weekly_return": 0.000974
+        },
+        "SPY": {
+          "price": 433.13,
+          "weekly_return": -0.001784
+        },
+        "AGG": {
+          "price": 117.79,
+          "weekly_return": 0.001868
+        },
+        "XLF": {
+          "price": 33.02,
+          "weekly_return": -0.001131
+        }
+      },
+      "benchmark_return": -0.000323
+    },
+    {
+      "week": 37,
+      "date": "2021-09-13",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 409.48,
+          "weekly_return": 0.00474
+        },
+        "TLT": {
+          "price": 139.65,
+          "weekly_return": -0.001641
+        },
+        "SPY": {
+          "price": 432.93,
+          "weekly_return": -0.000441
+        },
+        "AGG": {
+          "price": 117.66,
+          "weekly_return": -0.001159
+        },
+        "XLF": {
+          "price": 32.94,
+          "weekly_return": -0.002314
+        }
+      },
+      "benchmark_return": -0.000728
+    },
+    {
+      "week": 38,
+      "date": "2021-09-20",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 409.39,
+          "weekly_return": -0.000234
+        },
+        "TLT": {
+          "price": 139.02,
+          "weekly_return": -0.004519
+        },
+        "SPY": {
+          "price": 432.19,
+          "weekly_return": -0.001711
+        },
+        "AGG": {
+          "price": 117.78,
+          "weekly_return": 0.001041
+        },
+        "XLF": {
+          "price": 33.16,
+          "weekly_return": 0.006693
+        }
+      },
+      "benchmark_return": -0.00061
+    },
+    {
+      "week": 39,
+      "date": "2021-09-27",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 410.92,
+          "weekly_return": 0.003748
+        },
+        "TLT": {
+          "price": 138.47,
+          "weekly_return": -0.003993
+        },
+        "SPY": {
+          "price": 432.94,
+          "weekly_return": 0.00173
+        },
+        "AGG": {
+          "price": 117.45,
+          "weekly_return": -0.002752
+        },
+        "XLF": {
+          "price": 33.57,
+          "weekly_return": 0.012374
+        }
+      },
+      "benchmark_return": -6.3e-05
+    },
+    {
+      "week": 40,
+      "date": "2021-10-04",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 414.84,
+          "weekly_return": 0.009533
+        },
+        "TLT": {
+          "price": 138.94,
+          "weekly_return": 0.00345
+        },
+        "SPY": {
+          "price": 434.46,
+          "weekly_return": 0.003505
+        },
+        "AGG": {
+          "price": 117.53,
+          "weekly_return": 0.000673
+        },
+        "XLF": {
+          "price": 33.68,
+          "weekly_return": 0.003146
+        }
+      },
+      "benchmark_return": 0.002372
+    },
+    {
+      "week": 41,
+      "date": "2021-10-11",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 420.15,
+          "weekly_return": 0.012797
+        },
+        "TLT": {
+          "price": 139.4,
+          "weekly_return": 0.003304
+        },
+        "SPY": {
+          "price": 436.99,
+          "weekly_return": 0.005835
+        },
+        "AGG": {
+          "price": 117.84,
+          "weekly_return": 0.002625
+        },
+        "XLF": {
+          "price": 34.04,
+          "weekly_return": 0.010602
+        }
+      },
+      "benchmark_return": 0.004551
+    },
+    {
+      "week": 42,
+      "date": "2021-10-18",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 428.37,
+          "weekly_return": 0.019567
+        },
+        "TLT": {
+          "price": 138.8,
+          "weekly_return": -0.004351
+        },
+        "SPY": {
+          "price": 442.9,
+          "weekly_return": 0.01352
+        },
+        "AGG": {
+          "price": 117.73,
+          "weekly_return": -0.00091
+        },
+        "XLF": {
+          "price": 34.12,
+          "weekly_return": 0.002457
+        }
+      },
+      "benchmark_return": 0.007748
+    },
+    {
+      "week": 43,
+      "date": "2021-10-25",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 426.73,
+          "weekly_return": -0.003829
+        },
+        "TLT": {
+          "price": 139.25,
+          "weekly_return": 0.003284
+        },
+        "SPY": {
+          "price": 441.36,
+          "weekly_return": -0.003489
+        },
+        "AGG": {
+          "price": 118.11,
+          "weekly_return": 0.003176
+        },
+        "XLF": {
+          "price": 34.44,
+          "weekly_return": 0.00936
+        }
+      },
+      "benchmark_return": -0.000823
+    },
+    {
+      "week": 44,
+      "date": "2021-11-01",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 430.85,
+          "weekly_return": 0.009657
+        },
+        "TLT": {
+          "price": 138.67,
+          "weekly_return": -0.004189
+        },
+        "SPY": {
+          "price": 443.89,
+          "weekly_return": 0.005733
+        },
+        "AGG": {
+          "price": 118.17,
+          "weekly_return": 0.000512
+        },
+        "XLF": {
+          "price": 34.4,
+          "weekly_return": -0.001087
+        }
+      },
+      "benchmark_return": 0.003645
+    },
+    {
+      "week": 45,
+      "date": "2021-11-08",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 432.73,
+          "weekly_return": 0.004376
+        },
+        "TLT": {
+          "price": 137.5,
+          "weekly_return": -0.008441
+        },
+        "SPY": {
+          "price": 443.63,
+          "weekly_return": -0.000589
+        },
+        "AGG": {
+          "price": 117.71,
+          "weekly_return": -0.003884
+        },
+        "XLF": {
+          "price": 34.73,
+          "weekly_return": 0.009468
+        }
+      },
+      "benchmark_return": -0.001907
+    },
+    {
+      "week": 46,
+      "date": "2021-11-15",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 434.81,
+          "weekly_return": 0.004803
+        },
+        "TLT": {
+          "price": 136.61,
+          "weekly_return": -0.006449
+        },
+        "SPY": {
+          "price": 445.4,
+          "weekly_return": 0.004
+        },
+        "AGG": {
+          "price": 117.49,
+          "weekly_return": -0.001849
+        },
+        "XLF": {
+          "price": 34.92,
+          "weekly_return": 0.0056
+        }
+      },
+      "benchmark_return": 0.00166
+    },
+    {
+      "week": 47,
+      "date": "2021-11-22",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 436.57,
+          "weekly_return": 0.004034
+        },
+        "TLT": {
+          "price": 135.54,
+          "weekly_return": -0.007813
+        },
+        "SPY": {
+          "price": 446.97,
+          "weekly_return": 0.003515
+        },
+        "AGG": {
+          "price": 117.25,
+          "weekly_return": -0.002046
+        },
+        "XLF": {
+          "price": 34.78,
+          "weekly_return": -0.00397
+        }
+      },
+      "benchmark_return": 0.001291
+    },
+    {
+      "week": 48,
+      "date": "2021-11-29",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 436.97,
+          "weekly_return": 0.000937
+        },
+        "TLT": {
+          "price": 135.3,
+          "weekly_return": -0.001819
+        },
+        "SPY": {
+          "price": 445.64,
+          "weekly_return": -0.002961
+        },
+        "AGG": {
+          "price": 117.22,
+          "weekly_return": -0.000291
+        },
+        "XLF": {
+          "price": 34.61,
+          "weekly_return": -0.005013
+        }
+      },
+      "benchmark_return": -0.001893
+    },
+    {
+      "week": 49,
+      "date": "2021-12-06",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 439.97,
+          "weekly_return": 0.006847
+        },
+        "TLT": {
+          "price": 135.1,
+          "weekly_return": -0.001465
+        },
+        "SPY": {
+          "price": 447.18,
+          "weekly_return": 0.003442
+        },
+        "AGG": {
+          "price": 117.2,
+          "weekly_return": -0.000174
+        },
+        "XLF": {
+          "price": 34.63,
+          "weekly_return": 0.000536
+        }
+      },
+      "benchmark_return": 0.001996
+    },
+    {
+      "week": 50,
+      "date": "2021-12-13",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 443.86,
+          "weekly_return": 0.008855
+        },
+        "TLT": {
+          "price": 134.68,
+          "weekly_return": -0.003083
+        },
+        "SPY": {
+          "price": 449.05,
+          "weekly_return": 0.004182
+        },
+        "AGG": {
+          "price": 117.28,
+          "weekly_return": 0.000745
+        },
+        "XLF": {
+          "price": 34.68,
+          "weekly_return": 0.001345
+        }
+      },
+      "benchmark_return": 0.002807
+    },
+    {
+      "week": 51,
+      "date": "2021-12-20",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 446.29,
+          "weekly_return": 0.005475
+        },
+        "TLT": {
+          "price": 133.82,
+          "weekly_return": -0.00641
+        },
+        "SPY": {
+          "price": 452.36,
+          "weekly_return": 0.007369
+        },
+        "AGG": {
+          "price": 117.13,
+          "weekly_return": -0.00136
+        },
+        "XLF": {
+          "price": 35.23,
+          "weekly_return": 0.015985
+        }
+      },
+      "benchmark_return": 0.003877
+    },
+    {
+      "week": 52,
+      "date": "2021-12-27",
+      "regime": "bull",
+      "tickers": {
+        "QQQ": {
+          "price": 451.64,
+          "weekly_return": 0.01198
+        },
+        "TLT": {
+          "price": 133.32,
+          "weekly_return": -0.003714
+        },
+        "SPY": {
+          "price": 456.77,
+          "weekly_return": 0.009766
+        },
+        "AGG": {
+          "price": 117.31,
+          "weekly_return": 0.001613
+        },
+        "XLF": {
+          "price": 35.48,
+          "weekly_return": 0.00698
+        }
+      },
+      "benchmark_return": 0.006505
+    },
+    {
+      "week": 53,
+      "date": "2022-01-03",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 449.24,
+          "weekly_return": -0.005313
+        },
+        "TLT": {
+          "price": 135.24,
+          "weekly_return": 0.01442
+        },
+        "SPY": {
+          "price": 459.07,
+          "weekly_return": 0.005018
+        },
+        "AGG": {
+          "price": 118.1,
+          "weekly_return": 0.006709
+        },
+        "XLF": {
+          "price": 34.86,
+          "weekly_return": -0.017242
+        }
+      },
+      "benchmark_return": 0.005694
+    },
+    {
+      "week": 54,
+      "date": "2022-01-10",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 436.85,
+          "weekly_return": -0.027578
+        },
+        "TLT": {
+          "price": 135.77,
+          "weekly_return": 0.003877
+        },
+        "SPY": {
+          "price": 452.63,
+          "weekly_return": -0.014021
+        },
+        "AGG": {
+          "price": 118.75,
+          "weekly_return": 0.00546
+        },
+        "XLF": {
+          "price": 34.27,
+          "weekly_return": -0.01706
+        }
+      },
+      "benchmark_return": -0.006229
+    },
+    {
+      "week": 55,
+      "date": "2022-01-17",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 442.72,
+          "weekly_return": 0.013443
+        },
+        "TLT": {
+          "price": 137.27,
+          "weekly_return": 0.011048
+        },
+        "SPY": {
+          "price": 458.88,
+          "weekly_return": 0.013811
+        },
+        "AGG": {
+          "price": 119.26,
+          "weekly_return": 0.004324
+        },
+        "XLF": {
+          "price": 34.54,
+          "weekly_return": 0.008013
+        }
+      },
+      "benchmark_return": 0.010016
+    },
+    {
+      "week": 56,
+      "date": "2022-01-24",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 446.81,
+          "weekly_return": 0.009223
+        },
+        "TLT": {
+          "price": 137.78,
+          "weekly_return": 0.003693
+        },
+        "SPY": {
+          "price": 464.5,
+          "weekly_return": 0.01224
+        },
+        "AGG": {
+          "price": 119.3,
+          "weekly_return": 0.000335
+        },
+        "XLF": {
+          "price": 34.83,
+          "weekly_return": 0.008244
+        }
+      },
+      "benchmark_return": 0.007478
+    },
+    {
+      "week": 57,
+      "date": "2022-01-31",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 445.72,
+          "weekly_return": -0.002424
+        },
+        "TLT": {
+          "price": 137.3,
+          "weekly_return": -0.003476
+        },
+        "SPY": {
+          "price": 467.5,
+          "weekly_return": 0.006462
+        },
+        "AGG": {
+          "price": 119.09,
+          "weekly_return": -0.001772
+        },
+        "XLF": {
+          "price": 34.62,
+          "weekly_return": -0.006055
+        }
+      },
+      "benchmark_return": 0.003168
+    },
+    {
+      "week": 58,
+      "date": "2022-02-07",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 436.8,
+          "weekly_return": -0.020011
+        },
+        "TLT": {
+          "price": 137.07,
+          "weekly_return": -0.001662
+        },
+        "SPY": {
+          "price": 460.5,
+          "weekly_return": -0.014968
+        },
+        "AGG": {
+          "price": 118.8,
+          "weekly_return": -0.002398
+        },
+        "XLF": {
+          "price": 33.92,
+          "weekly_return": -0.020188
+        }
+      },
+      "benchmark_return": -0.00994
+    },
+    {
+      "week": 59,
+      "date": "2022-02-14",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 437.55,
+          "weekly_return": 0.001698
+        },
+        "TLT": {
+          "price": 137.95,
+          "weekly_return": 0.006416
+        },
+        "SPY": {
+          "price": 462.55,
+          "weekly_return": 0.004449
+        },
+        "AGG": {
+          "price": 119.04,
+          "weekly_return": 0.001971
+        },
+        "XLF": {
+          "price": 33.59,
+          "weekly_return": -0.009717
+        }
+      },
+      "benchmark_return": 0.003458
+    },
+    {
+      "week": 60,
+      "date": "2022-02-21",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 441.41,
+          "weekly_return": 0.008822
+        },
+        "TLT": {
+          "price": 137.29,
+          "weekly_return": -0.004774
+        },
+        "SPY": {
+          "price": 467.85,
+          "weekly_return": 0.011462
+        },
+        "AGG": {
+          "price": 118.51,
+          "weekly_return": -0.004422
+        },
+        "XLF": {
+          "price": 33.87,
+          "weekly_return": 0.008276
+        }
+      },
+      "benchmark_return": 0.005108
+    },
+    {
+      "week": 61,
+      "date": "2022-02-28",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 450.32,
+          "weekly_return": 0.020192
+        },
+        "TLT": {
+          "price": 136.84,
+          "weekly_return": -0.003249
+        },
+        "SPY": {
+          "price": 477.68,
+          "weekly_return": 0.02101
+        },
+        "AGG": {
+          "price": 118.15,
+          "weekly_return": -0.003034
+        },
+        "XLF": {
+          "price": 34.36,
+          "weekly_return": 0.014619
+        }
+      },
+      "benchmark_return": 0.011392
+    },
+    {
+      "week": 62,
+      "date": "2022-03-07",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 455.35,
+          "weekly_return": 0.011166
+        },
+        "TLT": {
+          "price": 136.72,
+          "weekly_return": -0.000938
+        },
+        "SPY": {
+          "price": 483.83,
+          "weekly_return": 0.012869
+        },
+        "AGG": {
+          "price": 118.21,
+          "weekly_return": 0.000537
+        },
+        "XLF": {
+          "price": 34.87,
+          "weekly_return": 0.014664
+        }
+      },
+      "benchmark_return": 0.007936
+    },
+    {
+      "week": 63,
+      "date": "2022-03-14",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 446.66,
+          "weekly_return": -0.019083
+        },
+        "TLT": {
+          "price": 136.4,
+          "weekly_return": -0.002334
+        },
+        "SPY": {
+          "price": 480.55,
+          "weekly_return": -0.006764
+        },
+        "AGG": {
+          "price": 118.06,
+          "weekly_return": -0.001274
+        },
+        "XLF": {
+          "price": 34.74,
+          "weekly_return": -0.003758
+        }
+      },
+      "benchmark_return": -0.004568
+    },
+    {
+      "week": 64,
+      "date": "2022-03-21",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 444.61,
+          "weekly_return": -0.004585
+        },
+        "TLT": {
+          "price": 135.89,
+          "weekly_return": -0.003687
+        },
+        "SPY": {
+          "price": 479.17,
+          "weekly_return": -0.002876
+        },
+        "AGG": {
+          "price": 117.65,
+          "weekly_return": -0.003539
+        },
+        "XLF": {
+          "price": 34.68,
+          "weekly_return": -0.001446
+        }
+      },
+      "benchmark_return": -0.003141
+    },
+    {
+      "week": 65,
+      "date": "2022-03-28",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 432.71,
+          "weekly_return": -0.026755
+        },
+        "TLT": {
+          "price": 136.83,
+          "weekly_return": 0.006906
+        },
+        "SPY": {
+          "price": 470.81,
+          "weekly_return": -0.017448
+        },
+        "AGG": {
+          "price": 118.08,
+          "weekly_return": 0.003668
+        },
+        "XLF": {
+          "price": 34.1,
+          "weekly_return": -0.016948
+        }
+      },
+      "benchmark_return": -0.009002
+    },
+    {
+      "week": 66,
+      "date": "2022-04-04",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 433.68,
+          "weekly_return": 0.00224
+        },
+        "TLT": {
+          "price": 137.41,
+          "weekly_return": 0.004242
+        },
+        "SPY": {
+          "price": 472.73,
+          "weekly_return": 0.004067
+        },
+        "AGG": {
+          "price": 118.27,
+          "weekly_return": 0.001627
+        },
+        "XLF": {
+          "price": 34.63,
+          "weekly_return": 0.015623
+        }
+      },
+      "benchmark_return": 0.003091
+    },
+    {
+      "week": 67,
+      "date": "2022-04-11",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 428.16,
+          "weekly_return": -0.01274
+        },
+        "TLT": {
+          "price": 138.08,
+          "weekly_return": 0.004848
+        },
+        "SPY": {
+          "price": 471.38,
+          "weekly_return": -0.002847
+        },
+        "AGG": {
+          "price": 118.97,
+          "weekly_return": 0.005929
+        },
+        "XLF": {
+          "price": 34.44,
+          "weekly_return": -0.005381
+        }
+      },
+      "benchmark_return": 0.000663
+    },
+    {
+      "week": 68,
+      "date": "2022-04-18",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 418.52,
+          "weekly_return": -0.022505
+        },
+        "TLT": {
+          "price": 139.37,
+          "weekly_return": 0.009346
+        },
+        "SPY": {
+          "price": 465.39,
+          "weekly_return": -0.012706
+        },
+        "AGG": {
+          "price": 119.32,
+          "weekly_return": 0.002962
+        },
+        "XLF": {
+          "price": 33.74,
+          "weekly_return": -0.020437
+        }
+      },
+      "benchmark_return": -0.006439
+    },
+    {
+      "week": 69,
+      "date": "2022-04-25",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 410.41,
+          "weekly_return": -0.019387
+        },
+        "TLT": {
+          "price": 137.68,
+          "weekly_return": -0.012089
+        },
+        "SPY": {
+          "price": 460.21,
+          "weekly_return": -0.011128
+        },
+        "AGG": {
+          "price": 118.6,
+          "weekly_return": -0.006024
+        },
+        "XLF": {
+          "price": 33.45,
+          "weekly_return": -0.008666
+        }
+      },
+      "benchmark_return": -0.009086
+    },
+    {
+      "week": 70,
+      "date": "2022-05-02",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 407.83,
+          "weekly_return": -0.006285
+        },
+        "TLT": {
+          "price": 137.85,
+          "weekly_return": 0.001238
+        },
+        "SPY": {
+          "price": 457.8,
+          "weekly_return": -0.005237
+        },
+        "AGG": {
+          "price": 118.68,
+          "weekly_return": 0.000663
+        },
+        "XLF": {
+          "price": 32.92,
+          "weekly_return": -0.015792
+        }
+      },
+      "benchmark_return": -0.002877
+    },
+    {
+      "week": 71,
+      "date": "2022-05-09",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 399.54,
+          "weekly_return": -0.020332
+        },
+        "TLT": {
+          "price": 139.29,
+          "weekly_return": 0.010418
+        },
+        "SPY": {
+          "price": 449.71,
+          "weekly_return": -0.017678
+        },
+        "AGG": {
+          "price": 119.53,
+          "weekly_return": 0.007164
+        },
+        "XLF": {
+          "price": 32.52,
+          "weekly_return": -0.012068
+        }
+      },
+      "benchmark_return": -0.007741
+    },
+    {
+      "week": 72,
+      "date": "2022-05-16",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 394.64,
+          "weekly_return": -0.012245
+        },
+        "TLT": {
+          "price": 139.26,
+          "weekly_return": -0.000194
+        },
+        "SPY": {
+          "price": 446.36,
+          "weekly_return": -0.007457
+        },
+        "AGG": {
+          "price": 119.59,
+          "weekly_return": 0.000452
+        },
+        "XLF": {
+          "price": 31.94,
+          "weekly_return": -0.017773
+        }
+      },
+      "benchmark_return": -0.004293
+    },
+    {
+      "week": 73,
+      "date": "2022-05-23",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 389.37,
+          "weekly_return": -0.01336
+        },
+        "TLT": {
+          "price": 139.7,
+          "weekly_return": 0.003138
+        },
+        "SPY": {
+          "price": 442.87,
+          "weekly_return": -0.007817
+        },
+        "AGG": {
+          "price": 119.72,
+          "weekly_return": 0.001076
+        },
+        "XLF": {
+          "price": 31.73,
+          "weekly_return": -0.006615
+        }
+      },
+      "benchmark_return": -0.00426
+    },
+    {
+      "week": 74,
+      "date": "2022-05-30",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 384.72,
+          "weekly_return": -0.011952
+        },
+        "TLT": {
+          "price": 139.6,
+          "weekly_return": -0.0007
+        },
+        "SPY": {
+          "price": 440.56,
+          "weekly_return": -0.005201
+        },
+        "AGG": {
+          "price": 119.45,
+          "weekly_return": -0.002209
+        },
+        "XLF": {
+          "price": 31.76,
+          "weekly_return": 0.000865
+        }
+      },
+      "benchmark_return": -0.004004
+    },
+    {
+      "week": 75,
+      "date": "2022-06-06",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 388.5,
+          "weekly_return": 0.00984
+        },
+        "TLT": {
+          "price": 140.27,
+          "weekly_return": 0.004745
+        },
+        "SPY": {
+          "price": 445.09,
+          "weekly_return": 0.010273
+        },
+        "AGG": {
+          "price": 119.29,
+          "weekly_return": -0.001352
+        },
+        "XLF": {
+          "price": 31.6,
+          "weekly_return": -0.004884
+        }
+      },
+      "benchmark_return": 0.005623
+    },
+    {
+      "week": 76,
+      "date": "2022-06-13",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 383.51,
+          "weekly_return": -0.012862
+        },
+        "TLT": {
+          "price": 140.54,
+          "weekly_return": 0.001946
+        },
+        "SPY": {
+          "price": 441.42,
+          "weekly_return": -0.008251
+        },
+        "AGG": {
+          "price": 119.61,
+          "weekly_return": 0.002669
+        },
+        "XLF": {
+          "price": 31.04,
+          "weekly_return": -0.017887
+        }
+      },
+      "benchmark_return": -0.003883
+    },
+    {
+      "week": 77,
+      "date": "2022-06-20",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 373.45,
+          "weekly_return": -0.026214
+        },
+        "TLT": {
+          "price": 140.42,
+          "weekly_return": -0.000824
+        },
+        "SPY": {
+          "price": 432.55,
+          "weekly_return": -0.02009
+        },
+        "AGG": {
+          "price": 119.56,
+          "weekly_return": -0.000405
+        },
+        "XLF": {
+          "price": 30.6,
+          "weekly_return": -0.014174
+        }
+      },
+      "benchmark_return": -0.012216
+    },
+    {
+      "week": 78,
+      "date": "2022-06-27",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 365.75,
+          "weekly_return": -0.020631
+        },
+        "TLT": {
+          "price": 142.37,
+          "weekly_return": 0.013853
+        },
+        "SPY": {
+          "price": 427.62,
+          "weekly_return": -0.011394
+        },
+        "AGG": {
+          "price": 120.12,
+          "weekly_return": 0.004687
+        },
+        "XLF": {
+          "price": 30.17,
+          "weekly_return": -0.014054
+        }
+      },
+      "benchmark_return": -0.004962
+    },
+    {
+      "week": 79,
+      "date": "2022-07-04",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 359.69,
+          "weekly_return": -0.016574
+        },
+        "TLT": {
+          "price": 143.67,
+          "weekly_return": 0.009142
+        },
+        "SPY": {
+          "price": 423.26,
+          "weekly_return": -0.010206
+        },
+        "AGG": {
+          "price": 121.04,
+          "weekly_return": 0.00769
+        },
+        "XLF": {
+          "price": 29.9,
+          "weekly_return": -0.008917
+        }
+      },
+      "benchmark_return": -0.003048
+    },
+    {
+      "week": 80,
+      "date": "2022-07-11",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 357.71,
+          "weekly_return": -0.005483
+        },
+        "TLT": {
+          "price": 144.99,
+          "weekly_return": 0.009213
+        },
+        "SPY": {
+          "price": 421.08,
+          "weekly_return": -0.005136
+        },
+        "AGG": {
+          "price": 121.29,
+          "weekly_return": 0.002043
+        },
+        "XLF": {
+          "price": 29.39,
+          "weekly_return": -0.017141
+        }
+      },
+      "benchmark_return": -0.002264
+    },
+    {
+      "week": 81,
+      "date": "2022-07-18",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 354.43,
+          "weekly_return": -0.009189
+        },
+        "TLT": {
+          "price": 147.24,
+          "weekly_return": 0.015525
+        },
+        "SPY": {
+          "price": 419.41,
+          "weekly_return": -0.00398
+        },
+        "AGG": {
+          "price": 122.13,
+          "weekly_return": 0.006912
+        },
+        "XLF": {
+          "price": 29.3,
+          "weekly_return": -0.003128
+        }
+      },
+      "benchmark_return": 0.000377
+    },
+    {
+      "week": 82,
+      "date": "2022-07-25",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 356.56,
+          "weekly_return": 0.00601
+        },
+        "TLT": {
+          "price": 149.21,
+          "weekly_return": 0.013318
+        },
+        "SPY": {
+          "price": 424.88,
+          "weekly_return": 0.013047
+        },
+        "AGG": {
+          "price": 122.7,
+          "weekly_return": 0.004643
+        },
+        "XLF": {
+          "price": 29.53,
+          "weekly_return": 0.008055
+        }
+      },
+      "benchmark_return": 0.009685
+    },
+    {
+      "week": 83,
+      "date": "2022-08-01",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 355.95,
+          "weekly_return": -0.001711
+        },
+        "TLT": {
+          "price": 150.19,
+          "weekly_return": 0.006633
+        },
+        "SPY": {
+          "price": 427.29,
+          "weekly_return": 0.005681
+        },
+        "AGG": {
+          "price": 122.81,
+          "weekly_return": 0.000942
+        },
+        "XLF": {
+          "price": 29.53,
+          "weekly_return": 6.9e-05
+        }
+      },
+      "benchmark_return": 0.003785
+    },
+    {
+      "week": 84,
+      "date": "2022-08-08",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 355.86,
+          "weekly_return": -0.000257
+        },
+        "TLT": {
+          "price": 150.61,
+          "weekly_return": 0.002776
+        },
+        "SPY": {
+          "price": 428.5,
+          "weekly_return": 0.002837
+        },
+        "AGG": {
+          "price": 123.07,
+          "weekly_return": 0.002082
+        },
+        "XLF": {
+          "price": 29.77,
+          "weekly_return": 0.008006
+        }
+      },
+      "benchmark_return": 0.002535
+    },
+    {
+      "week": 85,
+      "date": "2022-08-15",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 357.74,
+          "weekly_return": 0.005297
+        },
+        "TLT": {
+          "price": 151.83,
+          "weekly_return": 0.008075
+        },
+        "SPY": {
+          "price": 433.23,
+          "weekly_return": 0.011039
+        },
+        "AGG": {
+          "price": 123.23,
+          "weekly_return": 0.001292
+        },
+        "XLF": {
+          "price": 30.12,
+          "weekly_return": 0.011641
+        }
+      },
+      "benchmark_return": 0.00714
+    },
+    {
+      "week": 86,
+      "date": "2022-08-22",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 354.84,
+          "weekly_return": -0.008115
+        },
+        "TLT": {
+          "price": 151.14,
+          "weekly_return": -0.00453
+        },
+        "SPY": {
+          "price": 433.41,
+          "weekly_return": 0.00041
+        },
+        "AGG": {
+          "price": 123.23,
+          "weekly_return": 5.8e-05
+        },
+        "XLF": {
+          "price": 29.88,
+          "weekly_return": -0.007742
+        }
+      },
+      "benchmark_return": 0.000269
+    },
+    {
+      "week": 87,
+      "date": "2022-08-29",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 355.91,
+          "weekly_return": 0.003029
+        },
+        "TLT": {
+          "price": 150.79,
+          "weekly_return": -0.002343
+        },
+        "SPY": {
+          "price": 433.69,
+          "weekly_return": 0.000641
+        },
+        "AGG": {
+          "price": 123.04,
+          "weekly_return": -0.001591
+        },
+        "XLF": {
+          "price": 29.98,
+          "weekly_return": 0.003194
+        }
+      },
+      "benchmark_return": -0.000252
+    },
+    {
+      "week": 88,
+      "date": "2022-09-05",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 350.95,
+          "weekly_return": -0.013944
+        },
+        "TLT": {
+          "price": 151.59,
+          "weekly_return": 0.0053
+        },
+        "SPY": {
+          "price": 428.4,
+          "weekly_return": -0.012197
+        },
+        "AGG": {
+          "price": 123.01,
+          "weekly_return": -0.000267
+        },
+        "XLF": {
+          "price": 29.27,
+          "weekly_return": -0.02358
+        }
+      },
+      "benchmark_return": -0.007425
+    },
+    {
+      "week": 89,
+      "date": "2022-09-12",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 354.45,
+          "weekly_return": 0.009971
+        },
+        "TLT": {
+          "price": 152.64,
+          "weekly_return": 0.006989
+        },
+        "SPY": {
+          "price": 436.21,
+          "weekly_return": 0.018235
+        },
+        "AGG": {
+          "price": 123.07,
+          "weekly_return": 0.000497
+        },
+        "XLF": {
+          "price": 30.0,
+          "weekly_return": 0.024918
+        }
+      },
+      "benchmark_return": 0.01114
+    },
+    {
+      "week": 90,
+      "date": "2022-09-19",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 347.12,
+          "weekly_return": -0.020684
+        },
+        "TLT": {
+          "price": 152.04,
+          "weekly_return": -0.003984
+        },
+        "SPY": {
+          "price": 431.46,
+          "weekly_return": -0.010891
+        },
+        "AGG": {
+          "price": 122.92,
+          "weekly_return": -0.001194
+        },
+        "XLF": {
+          "price": 29.64,
+          "weekly_return": -0.011898
+        }
+      },
+      "benchmark_return": -0.007012
+    },
+    {
+      "week": 91,
+      "date": "2022-09-26",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 341.62,
+          "weekly_return": -0.015829
+        },
+        "TLT": {
+          "price": 152.64,
+          "weekly_return": 0.003985
+        },
+        "SPY": {
+          "price": 429.23,
+          "weekly_return": -0.005174
+        },
+        "AGG": {
+          "price": 122.91,
+          "weekly_return": -5.2e-05
+        },
+        "XLF": {
+          "price": 29.45,
+          "weekly_return": -0.006692
+        }
+      },
+      "benchmark_return": -0.003125
+    },
+    {
+      "week": 92,
+      "date": "2022-10-03",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 337.84,
+          "weekly_return": -0.011065
+        },
+        "TLT": {
+          "price": 153.01,
+          "weekly_return": 0.002433
+        },
+        "SPY": {
+          "price": 426.3,
+          "weekly_return": -0.006818
+        },
+        "AGG": {
+          "price": 123.34,
+          "weekly_return": 0.003454
+        },
+        "XLF": {
+          "price": 29.51,
+          "weekly_return": 0.002066
+        }
+      },
+      "benchmark_return": -0.002709
+    },
+    {
+      "week": 93,
+      "date": "2022-10-10",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 334.59,
+          "weekly_return": -0.009627
+        },
+        "TLT": {
+          "price": 154.02,
+          "weekly_return": 0.006591
+        },
+        "SPY": {
+          "price": 423.04,
+          "weekly_return": -0.007663
+        },
+        "AGG": {
+          "price": 123.89,
+          "weekly_return": 0.004461
+        },
+        "XLF": {
+          "price": 29.03,
+          "weekly_return": -0.016035
+        }
+      },
+      "benchmark_return": -0.002813
+    },
+    {
+      "week": 94,
+      "date": "2022-10-17",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 336.73,
+          "weekly_return": 0.006406
+        },
+        "TLT": {
+          "price": 154.83,
+          "weekly_return": 0.005245
+        },
+        "SPY": {
+          "price": 427.9,
+          "weekly_return": 0.011492
+        },
+        "AGG": {
+          "price": 124.32,
+          "weekly_return": 0.003454
+        },
+        "XLF": {
+          "price": 29.33,
+          "weekly_return": 0.010189
+        }
+      },
+      "benchmark_return": 0.008277
+    },
+    {
+      "week": 95,
+      "date": "2022-10-24",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 329.4,
+          "weekly_return": -0.021793
+        },
+        "TLT": {
+          "price": 154.74,
+          "weekly_return": -0.000566
+        },
+        "SPY": {
+          "price": 422.07,
+          "weekly_return": -0.013629
+        },
+        "AGG": {
+          "price": 124.41,
+          "weekly_return": 0.000723
+        },
+        "XLF": {
+          "price": 29.11,
+          "weekly_return": -0.00753
+        }
+      },
+      "benchmark_return": -0.007888
+    },
+    {
+      "week": 96,
+      "date": "2022-10-31",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 332.59,
+          "weekly_return": 0.009711
+        },
+        "TLT": {
+          "price": 156.2,
+          "weekly_return": 0.009426
+        },
+        "SPY": {
+          "price": 426.84,
+          "weekly_return": 0.01132
+        },
+        "AGG": {
+          "price": 125.29,
+          "weekly_return": 0.00707
+        },
+        "XLF": {
+          "price": 29.13,
+          "weekly_return": 0.000704
+        }
+      },
+      "benchmark_return": 0.00962
+    },
+    {
+      "week": 97,
+      "date": "2022-11-07",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 331.56,
+          "weekly_return": -0.003108
+        },
+        "TLT": {
+          "price": 156.49,
+          "weekly_return": 0.001842
+        },
+        "SPY": {
+          "price": 428.29,
+          "weekly_return": 0.003387
+        },
+        "AGG": {
+          "price": 125.19,
+          "weekly_return": -0.000742
+        },
+        "XLF": {
+          "price": 29.04,
+          "weekly_return": -0.002924
+        }
+      },
+      "benchmark_return": 0.001735
+    },
+    {
+      "week": 98,
+      "date": "2022-11-14",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 334.1,
+          "weekly_return": 0.007663
+        },
+        "TLT": {
+          "price": 157.21,
+          "weekly_return": 0.004611
+        },
+        "SPY": {
+          "price": 434.21,
+          "weekly_return": 0.013819
+        },
+        "AGG": {
+          "price": 125.62,
+          "weekly_return": 0.003387
+        },
+        "XLF": {
+          "price": 29.14,
+          "weekly_return": 0.003458
+        }
+      },
+      "benchmark_return": 0.009646
+    },
+    {
+      "week": 99,
+      "date": "2022-11-21",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 335.45,
+          "weekly_return": 0.004038
+        },
+        "TLT": {
+          "price": 157.75,
+          "weekly_return": 0.003443
+        },
+        "SPY": {
+          "price": 435.1,
+          "weekly_return": 0.002064
+        },
+        "AGG": {
+          "price": 125.31,
+          "weekly_return": -0.002448
+        },
+        "XLF": {
+          "price": 29.38,
+          "weekly_return": 0.008049
+        }
+      },
+      "benchmark_return": 0.000259
+    },
+    {
+      "week": 100,
+      "date": "2022-11-28",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 325.37,
+          "weekly_return": -0.030047
+        },
+        "TLT": {
+          "price": 158.56,
+          "weekly_return": 0.005109
+        },
+        "SPY": {
+          "price": 427.97,
+          "weekly_return": -0.016399
+        },
+        "AGG": {
+          "price": 125.83,
+          "weekly_return": 0.004153
+        },
+        "XLF": {
+          "price": 28.91,
+          "weekly_return": -0.015804
+        }
+      },
+      "benchmark_return": -0.008178
+    },
+    {
+      "week": 101,
+      "date": "2022-12-05",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 321.97,
+          "weekly_return": -0.01044
+        },
+        "TLT": {
+          "price": 158.3,
+          "weekly_return": -0.001656
+        },
+        "SPY": {
+          "price": 425.93,
+          "weekly_return": -0.004751
+        },
+        "AGG": {
+          "price": 125.47,
+          "weekly_return": -0.002877
+        },
+        "XLF": {
+          "price": 28.94,
+          "weekly_return": 0.000737
+        }
+      },
+      "benchmark_return": -0.004001
+    },
+    {
+      "week": 102,
+      "date": "2022-12-12",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 311.97,
+          "weekly_return": -0.031082
+        },
+        "TLT": {
+          "price": 157.83,
+          "weekly_return": -0.002944
+        },
+        "SPY": {
+          "price": 416.46,
+          "weekly_return": -0.022252
+        },
+        "AGG": {
+          "price": 125.56,
+          "weekly_return": 0.00073
+        },
+        "XLF": {
+          "price": 28.45,
+          "weekly_return": -0.016865
+        }
+      },
+      "benchmark_return": -0.013059
+    },
+    {
+      "week": 103,
+      "date": "2022-12-19",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 309.29,
+          "weekly_return": -0.008568
+        },
+        "TLT": {
+          "price": 155.7,
+          "weekly_return": -0.013503
+        },
+        "SPY": {
+          "price": 416.2,
+          "weekly_return": -0.000625
+        },
+        "AGG": {
+          "price": 124.69,
+          "weekly_return": -0.006923
+        },
+        "XLF": {
+          "price": 28.47,
+          "weekly_return": 0.0007
+        }
+      },
+      "benchmark_return": -0.003144
+    },
+    {
+      "week": 104,
+      "date": "2022-12-26",
+      "regime": "stress",
+      "tickers": {
+        "QQQ": {
+          "price": 299.81,
+          "weekly_return": -0.030664
+        },
+        "TLT": {
+          "price": 157.49,
+          "weekly_return": 0.011491
+        },
+        "SPY": {
+          "price": 408.1,
+          "weekly_return": -0.019446
+        },
+        "AGG": {
+          "price": 125.56,
+          "weekly_return": 0.006992
+        },
+        "XLF": {
+          "price": 28.55,
+          "weekly_return": 0.002713
+        }
+      },
+      "benchmark_return": -0.008871
+    }
+  ]
+}
