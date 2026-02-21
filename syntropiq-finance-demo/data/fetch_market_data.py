@@ -1,252 +1,278 @@
 #!/usr/bin/env python3
 """
-Fetch Market Data — Syntropiq Finance Demo
+Fetch real historical market data for Syntropiq finance demo.
 
-Generates weekly price/return data for the period January 4, 2021 through
-December 30, 2022 (104 weeks). This window captures the full 2021 bull
-regime followed by a rate-rise/stress regime.
+- Source: yfinance daily adjusted close
+- Tickers: QQQ, SPY, TLT, AGG, XLF, GLD, USO, EEM, IWM, HYG
+- Period: 2021-01-01 through 2022-12-31
+- Weekly return: Friday close (or last trading day in week) pct change
+- Benchmark return: 0.60 * SPY + 0.40 * AGG
+- Regime: stress when SPY 6-week rolling return < 0 OR 6-week vol > 75th percentile
 
-Tickers:
-    QQQ  — Nasdaq-100 (Growth Agent universe)
-    TLT  — 20+ Year Treasury Bond (Risk Agent universe)
-    SPY  — S&P 500 (Macro Agent universe)
-    AGG  — US Aggregate Bond (benchmark blending)
-    XLF  — Financials Sector (supplementary)
-
-Benchmark: 60% SPY + 40% AGG
-
-The data is calibrated so that:
-- Bull phase: Growth-oriented assets (QQQ) clearly outperform; bonds underperform
-- Stress phase: Growth crashes, bonds provide safety (flight-to-quality)
-- This creates the governance narrative: Growth Agent suppressed in stress,
-  Risk Agent elevated, governance protects capital
-
-Output: market_data.json
+Output schema is compatible with existing simulation pipeline.
 """
 
+from __future__ import annotations
+
 import json
-import hashlib
-import math
 import os
-from datetime import datetime, timedelta
+from datetime import date, timedelta
+from typing import Dict, List, Optional
+
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_PATH = os.path.join(DATA_DIR, "market_data.json")
 
-TICKERS = ["QQQ", "TLT", "SPY", "AGG", "XLF"]
+TICKERS = ["QQQ", "SPY", "TLT", "AGG", "XLF", "GLD", "USO", "EEM", "IWM", "HYG"]
+BENCHMARK_WEIGHTS = {"SPY": 0.60, "AGG": 0.40}
 
-START_PRICES = {
-    "QQQ": 312.68,
-    "TLT": 157.47,
-    "SPY": 375.31,
-    "AGG": 117.82,
-    "XLF": 28.65,
-}
-
-# ── Weekly return parameters by regime ───────────────────────────
-#
-# Bull (2021): Strong growth, QQQ and SPY rally, bonds slightly negative
-# Stress (2022): QQQ crashes hard, bonds provide flight-to-quality safety
-#
-# Key design: returns are calibrated so agents have clear regime performance:
-#   Bull:   Growth Agent > Benchmark > Risk Agent
-#   Stress: Risk Agent > Benchmark > Growth Agent
-#
-# This is the fundamental governance story — authority must shift.
-
-REGIME_PARAMS = {
-    "bull": {
-        #           mean     vol   -- lower vol for cleaner regime signal
-        "QQQ": {"mean":  0.0075, "vol": 0.008},  # Strong growth
-        "SPY": {"mean":  0.0045, "vol": 0.006},  # Solid broad market
-        "TLT": {"mean": -0.0015, "vol": 0.005},  # Bonds weak in bull
-        "AGG": {"mean":  0.0002, "vol": 0.002},  # Bonds flat
-        "XLF": {"mean":  0.0060, "vol": 0.009},  # Financials strong
-    },
-    "stress": {
-        "QQQ": {"mean": -0.0070, "vol": 0.012},  # Tech crashes
-        "SPY": {"mean": -0.0020, "vol": 0.010},  # Broad decline
-        "TLT": {"mean":  0.0030, "vol": 0.006},  # Flight-to-quality
-        "AGG": {"mean":  0.0012, "vol": 0.003},  # Bonds as safe haven
-        "XLF": {"mean": -0.0025, "vol": 0.011},  # Financials hurt
-    },
-}
+START_MONDAY = date(2021, 1, 4)
+END_FRIDAY = date(2022, 12, 30)
+EXPECTED_WEEKS = 104
 
 
-def _stable_hash(s: str) -> float:
-    """Deterministic pseudo-random float in [0, 1) from a string seed."""
-    h = int(hashlib.sha256(s.encode()).hexdigest(), 16)
-    return (h % 1000000) / 1000000.0
+def _import_deps():
+    try:
+        import pandas as pd  # type: ignore
+        import yfinance as yf  # type: ignore
+    except ImportError as exc:
+        raise SystemExit("Missing dependency: pip install yfinance") from exc
+    return pd, yf
 
 
-def _box_muller(u1: float, u2: float):
-    """Two uniform -> two standard normals."""
-    r = math.sqrt(-2.0 * math.log(max(u1, 1e-10)))
-    theta = 2.0 * math.pi * u2
-    return r * math.cos(theta), r * math.sin(theta)
+def _extract_close_series(raw_df, ticker: str):
+    import pandas as pd  # type: ignore
+
+    if raw_df is None or raw_df.empty:
+        return pd.Series(dtype="float64")
+
+    if isinstance(raw_df.columns, pd.MultiIndex):
+        if (ticker, "Close") in raw_df.columns:
+            s = raw_df[(ticker, "Close")]
+        elif ("Close", ticker) in raw_df.columns:
+            s = raw_df[("Close", ticker)]
+        elif ticker in raw_df.columns.get_level_values(0):
+            sub = raw_df[ticker]
+            s = sub["Close"] if "Close" in sub.columns else sub.iloc[:, 0]
+        else:
+            return pd.Series(dtype="float64")
+    else:
+        if ticker in raw_df.columns:
+            s = raw_df[ticker]
+        elif "Close" in raw_df.columns:
+            s = raw_df["Close"]
+        else:
+            return pd.Series(dtype="float64")
+
+    s = s.dropna().astype(float)
+    s.index = pd.to_datetime(s.index)
+    return s
 
 
-def _generate_returns(week: int, regime: str, seed: int = 2024):
-    """Generate correlated weekly returns for all tickers."""
-    params = REGIME_PARAMS[regime]
+def _download_daily_closes(tickers: List[str]):
+    pd, yf = _import_deps()
 
-    # Generate normals per ticker
-    normals = {}
-    for ticker in TICKERS:
-        u1 = _stable_hash(f"w{week}_t{ticker}_u1_s{seed}")
-        u2 = _stable_hash(f"w{week}_t{ticker}_u2_s{seed}")
-        z, _ = _box_muller(u1, u2)
-        normals[ticker] = z
+    # include buffer before period so first weekly return can be computed
+    raw = yf.download(
+        tickers=tickers,
+        start="2020-12-01",
+        end="2023-01-10",
+        interval="1d",
+        auto_adjust=True,
+        progress=False,
+        group_by="ticker",
+        threads=False,
+    )
 
-    # Correlate: equities move together, bonds inversely
-    # QQQ independent
-    raw = {}
-    raw["QQQ"] = normals["QQQ"]
+    close_map = {ticker: _extract_close_series(raw, ticker) for ticker in tickers}
 
-    # SPY correlated with QQQ (0.88 bull, 0.93 stress)
-    rho_qs = 0.88 if regime == "bull" else 0.93
-    raw["SPY"] = rho_qs * raw["QQQ"] + math.sqrt(1 - rho_qs**2) * normals["SPY"]
+    # retry per-ticker fallback
+    for ticker in tickers:
+        if close_map[ticker].empty:
+            retry = yf.download(
+                tickers=ticker,
+                start="2020-12-01",
+                end="2023-01-10",
+                interval="1d",
+                auto_adjust=True,
+                progress=False,
+                threads=False,
+            )
+            close_map[ticker] = _extract_close_series(retry, ticker)
 
-    # TLT negatively correlated with QQQ in bull, uncorrelated in stress
-    rho_qt = -0.30 if regime == "bull" else 0.05
-    raw["TLT"] = rho_qt * raw["QQQ"] + math.sqrt(1 - rho_qt**2) * normals["TLT"]
-
-    # AGG correlated with TLT
-    rho_ta = 0.80
-    raw["AGG"] = rho_ta * raw["TLT"] + math.sqrt(1 - rho_ta**2) * normals["AGG"]
-
-    # XLF correlated with SPY
-    rho_xf = 0.75
-    raw["XLF"] = rho_xf * raw["SPY"] + math.sqrt(1 - rho_xf**2) * normals["XLF"]
-
-    # Scale to mean/vol
-    returns = {}
-    for ticker in TICKERS:
-        p = params[ticker]
-        returns[ticker] = p["mean"] + p["vol"] * raw[ticker]
-
-    return returns
+    return pd, close_map
 
 
-def generate_market_data(seed: int = 2024):
-    """Generate 104 weeks of market data."""
-    start_date = datetime(2021, 1, 4)
-    weeks = []
-    prices = dict(START_PRICES)
+def _week_fridays() -> List[date]:
+    fridays: List[date] = []
+    d = START_MONDAY + timedelta(days=4)
+    while d <= END_FRIDAY:
+        fridays.append(d)
+        d += timedelta(days=7)
+    return fridays
 
-    for week_num in range(1, 105):
-        regime = "bull" if week_num <= 52 else "stress"
-        date = start_date + timedelta(weeks=week_num - 1)
 
-        returns = _generate_returns(week_num, regime, seed)
+def _weekly_close_for_friday(series, friday: date) -> Optional[float]:
+    """Last available close in the Mon-Fri window ending at `friday`."""
+    week_start = friday - timedelta(days=4)
+    mask = (series.index.date >= week_start) & (series.index.date <= friday)
+    window = series.loc[mask]
+    if window.empty:
+        return None
 
-        # Regime transition: extra volatility spike at week 52-54
-        if 52 <= week_num <= 54:
-            for ticker in TICKERS:
-                if ticker in ("QQQ", "XLF"):
-                    returns[ticker] -= 0.008  # Sharp equity sell-off
-                elif ticker in ("TLT", "AGG"):
-                    returns[ticker] += 0.004  # Flight to safety begins
+    value = window.iloc[-1]
 
-        # Update prices
-        week_data = {
-            "week": week_num,
-            "date": date.strftime("%Y-%m-%d"),
-            "regime": regime,
-            "tickers": {},
-        }
+    # Handle scalar, 1-element Series, or 1-element array
+    if hasattr(value, "item"):
+        try:
+            return float(value.item())
+        except Exception:
+            pass
 
-        for ticker in TICKERS:
-            ret = max(-0.10, min(0.08, returns[ticker]))
-            new_price = prices[ticker] * (1.0 + ret)
-            week_data["tickers"][ticker] = {
-                "price": round(new_price, 2),
-                "weekly_return": round(ret, 6),
-            }
-            prices[ticker] = new_price
+    if hasattr(value, "values"):
+        return float(value.values[0])
 
-        # Benchmark: 60% SPY + 40% AGG
+    return float(value)
+
+
+def _previous_close_before(series, friday: date) -> Optional[float]:
+    prev = series.loc[series.index.date < (friday - timedelta(days=4))]
+    if prev.empty:
+        return None
+    v = prev.iloc[-1]
+    if hasattr(v, "item"):
+        try:
+            return float(v.item())
+        except Exception:
+            pass
+    if hasattr(v, "values"):
+        return float(v.values[0])
+    return float(v)
+
+
+def _calc_regimes(spy_returns: List[float]) -> List[str]:
+    regimes: List[str] = []
+    rolling_means: List[float] = []
+    rolling_vols: List[float] = []
+
+    for i in range(len(spy_returns)):
+        w = spy_returns[max(0, i - 5): i + 1]
+        mean = sum(w) / len(w)
+        rolling_means.append(mean)
+
+        if len(w) > 1:
+            w_mean = sum(w) / len(w)
+            var = sum((x - w_mean) ** 2 for x in w) / len(w)
+            vol = var ** 0.5
+        else:
+            vol = 0.0
+        rolling_vols.append(vol)
+
+    sorted_vols = sorted(rolling_vols)
+    p75_idx = int(0.75 * (len(sorted_vols) - 1)) if sorted_vols else 0
+    vol_p75 = sorted_vols[p75_idx] if sorted_vols else 0.0
+
+    for mean, vol in zip(rolling_means, rolling_vols):
+        regime = "stress" if (mean < 0.0 or vol > vol_p75) else "bull"
+        regimes.append(regime)
+
+    return regimes
+
+
+def generate_market_data() -> Dict:
+    pd, close_map = _download_daily_closes(TICKERS)
+
+    for t in TICKERS:
+        if close_map[t].empty:
+            raise RuntimeError(f"No data fetched for ticker {t}")
+
+    fridays = _week_fridays()
+
+    temp_rows = []
+    skipped = 0
+
+    for friday in fridays:
+        prices: Dict[str, float] = {}
+        returns: Dict[str, float] = {}
+        missing = False
+
+        for t in TICKERS:
+            s = close_map[t]
+            close = _weekly_close_for_friday(s, friday)
+            prev = _previous_close_before(s, friday)
+            if close is None or prev is None or prev == 0:
+                missing = True
+                break
+
+            ret = (close / prev) - 1.0
+            prices[t] = round(close, 2)
+            returns[t] = round(ret, 6)
+
+        if missing:
+            skipped += 1
+            print(f"Skipping week ending {friday}: incomplete ticker coverage")
+            continue
+
         benchmark_return = (
-            0.60 * week_data["tickers"]["SPY"]["weekly_return"]
-            + 0.40 * week_data["tickers"]["AGG"]["weekly_return"]
+            BENCHMARK_WEIGHTS["SPY"] * returns["SPY"]
+            + BENCHMARK_WEIGHTS["AGG"] * returns["AGG"]
         )
-        week_data["benchmark_return"] = round(benchmark_return, 6)
-        weeks.append(week_data)
 
-    # Summary
-    bull_weeks = [w for w in weeks if w["regime"] == "bull"]
-    stress_weeks = [w for w in weeks if w["regime"] == "stress"]
+        temp_rows.append(
+            {
+                "friday": friday,
+                "prices": prices,
+                "returns": returns,
+                "benchmark_return": round(benchmark_return, 6),
+            }
+        )
 
-    summary = {
+    if not temp_rows:
+        raise RuntimeError("No weekly rows constructed from market data")
+
+    spy_returns = [row["returns"]["SPY"] for row in temp_rows]
+    regimes = _calc_regimes(spy_returns)
+
+    weeks = []
+    for idx, row in enumerate(temp_rows, start=1):
+        monday = row["friday"] - timedelta(days=4)
+        weeks.append(
+            {
+                "week": idx,
+                "date": monday.isoformat(),
+                "regime": regimes[idx - 1],
+                "tickers": {
+                    t: {
+                        "price": row["prices"][t],
+                        "weekly_return": row["returns"][t],
+                    }
+                    for t in TICKERS
+                },
+                "benchmark_return": row["benchmark_return"],
+            }
+        )
+
+    first_stress = next((w["week"] for w in weeks if w["regime"] == "stress"), None)
+
+    output = {
         "period": "2021-01-04 to 2022-12-30",
         "total_weeks": len(weeks),
-        "regime_shift_week": 53,
+        "regime_shift_week": first_stress,
         "tickers": TICKERS,
         "benchmark_composition": "60% SPY + 40% AGG",
-        "starting_portfolio": 10000000,
-        "bull_phase": {
-            "weeks": f"1-{len(bull_weeks)}",
-            "ticker_returns": {
-                ticker: round(
-                    sum(w["tickers"][ticker]["weekly_return"] for w in bull_weeks), 4
-                )
-                for ticker in TICKERS
-            },
-        },
-        "stress_phase": {
-            "weeks": f"{len(bull_weeks)+1}-{len(weeks)}",
-            "ticker_returns": {
-                ticker: round(
-                    sum(w["tickers"][ticker]["weekly_return"] for w in stress_weeks), 4
-                )
-                for ticker in TICKERS
-            },
-        },
+        "weeks": weeks,
     }
-
-    output = {"summary": summary, "weeks": weeks}
 
     with open(OUTPUT_PATH, "w") as f:
         json.dump(output, f, indent=2)
 
-    print(f"Market data generated: {OUTPUT_PATH}")
-    print(f"  Period: {summary['period']}")
-    print(f"  Weeks: {summary['total_weeks']}")
-    print(f"  Regime shift: Week {summary['regime_shift_week']}")
-
-    final_prices = {
-        ticker: weeks[-1]["tickers"][ticker]["price"] for ticker in TICKERS
-    }
-    print(f"\n  Cumulative returns:")
-    for ticker in TICKERS:
-        total_ret = (final_prices[ticker] / START_PRICES[ticker] - 1) * 100
-        print(f"    {ticker}: {total_ret:+.1f}%")
-
-    # Show agent return characteristics
-    for phase, phase_weeks in [("Bull", bull_weeks), ("Stress", stress_weeks)]:
-        bm = sum(w["benchmark_return"] for w in phase_weeks)
-        growth_r = sum(
-            0.70 * w["tickers"]["QQQ"]["weekly_return"]
-            + 0.20 * w["tickers"]["SPY"]["weekly_return"]
-            + 0.10 * w["tickers"]["TLT"]["weekly_return"]
-            for w in phase_weeks
-        )
-        risk_r = sum(
-            0.15 * w["tickers"]["QQQ"]["weekly_return"]
-            + 0.25 * w["tickers"]["SPY"]["weekly_return"]
-            + 0.60 * w["tickers"]["TLT"]["weekly_return"]
-            for w in phase_weeks
-        )
-        macro_r = sum(
-            0.35 * w["tickers"]["QQQ"]["weekly_return"]
-            + 0.45 * w["tickers"]["SPY"]["weekly_return"]
-            + 0.20 * w["tickers"]["TLT"]["weekly_return"]
-            for w in phase_weeks
-        )
-        print(f"\n  {phase} Phase — Agent returns vs benchmark ({bm:+.2%}):")
-        print(f"    Growth: {growth_r:+.2%}  (delta: {growth_r - bm:+.2%})")
-        print(f"    Risk:   {risk_r:+.2%}  (delta: {risk_r - bm:+.2%})")
-        print(f"    Macro:  {macro_r:+.2%}  (delta: {macro_r - bm:+.2%})")
+    print(f"Market data written: {OUTPUT_PATH}")
+    print(f"Weeks generated: {len(weeks)}")
+    print(f"Date coverage: {weeks[0]['date']} -> {weeks[-1]['date']}")
+    if skipped:
+        print(f"Weeks skipped due to missing data: {skipped}")
+    if len(weeks) != EXPECTED_WEEKS:
+        print("Warning: weeks generated != 104 (data gaps/holidays handling)")
 
     return output
 
