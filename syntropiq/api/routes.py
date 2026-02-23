@@ -6,17 +6,26 @@ Provides endpoints for:
 - Agent registration and management
 - System monitoring and statistics
 - Governance history and reflections
+- Governance telemetry (events, cycles, streaming)
 """
 
-from fastapi import APIRouter, HTTPException
-from typing import List
-from syntropiq.core.models import Task, Agent
+import asyncio
+import json
+import queue
+from typing import List, Optional
+
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
+
+from syntropiq.core.models import Task
 from syntropiq.api.schemas import (
-    TaskSubmissionRequest,
     AgentRegistrationRequest,
     AgentResponse,
     GovernanceCycleResponse,
-    SystemStatisticsResponse
+    GovernanceCycleResponseV1,
+    GovernanceEventV1,
+    SystemStatisticsResponse,
+    TaskSubmissionRequest,
 )
 import syntropiq.api.server as server
 
@@ -35,24 +44,18 @@ def submit_tasks(request: TaskSubmissionRequest):
     3. Returns results with trust updates
     """
 
-    # Convert request into Task objects
     tasks = [
         Task(
             id=task.id,
             impact=task.impact,
             urgency=task.urgency,
             risk=task.risk,
-            metadata=task.metadata or {}
+            metadata=task.metadata or {},
         )
         for task in request.tasks
     ]
 
-    # IMPORTANT CHANGE:
-    # We no longer filter by status="active".
-    # Governance engine must receive all agents
-    # so it can evaluate suppression, probation, drift internally.
     agents = server.agent_registry.get_agents_dict()
-
     if not agents:
         raise HTTPException(status_code=400, detail="No agents registered")
 
@@ -61,15 +64,15 @@ def submit_tasks(request: TaskSubmissionRequest):
             tasks=tasks,
             agents=agents,
             executor=server.executor,
-            run_id=request.run_id or "API_CYCLE"
+            run_id=request.run_id or "API_CYCLE",
         )
 
-        # Sync trust scores into registry
         server.agent_registry.sync_trust_scores()
 
-        # Sync server-level mutation engine state from loop's engine
         server.mutation_engine.trust_threshold = result["mutation"]["trust_threshold"]
-        server.mutation_engine.suppression_threshold = result["mutation"]["suppression_threshold"]
+        server.mutation_engine.suppression_threshold = result["mutation"][
+            "suppression_threshold"
+        ]
         server.mutation_engine.drift_delta = result["mutation"]["drift_delta"]
 
         return GovernanceCycleResponse(
@@ -80,7 +83,7 @@ def submit_tasks(request: TaskSubmissionRequest):
             avg_latency=result["statistics"]["avg_latency"],
             trust_updates=result["trust_updates"],
             reflection=result["reflection"],
-            mutation=result["mutation"]
+            mutation=result["mutation"],
         )
 
     except Exception as e:
@@ -89,23 +92,21 @@ def submit_tasks(request: TaskSubmissionRequest):
 
 @router.post("/agents/register", response_model=AgentResponse)
 def register_agent(request: AgentRegistrationRequest):
-    """
-    Register a new agent.
-    """
+    """Register a new agent."""
 
     try:
         agent = server.agent_registry.register_agent(
             agent_id=request.agent_id,
             capabilities=request.capabilities,
             initial_trust_score=request.initial_trust_score,
-            status=request.status
+            status=request.status,
         )
 
         return AgentResponse(
             agent_id=agent.id,
             trust_score=agent.trust_score,
             capabilities=agent.capabilities,
-            status=agent.status
+            status=agent.status,
         )
 
     except Exception as e:
@@ -121,7 +122,7 @@ def list_agents(status: str = None):
             agent_id=agent.id,
             trust_score=agent.trust_score,
             capabilities=agent.capabilities,
-            status=agent.status
+            status=agent.status,
         )
         for agent in agents
     ]
@@ -141,7 +142,7 @@ def get_agent_status(agent_id: str):
         "trust_score": agent.trust_score,
         "capabilities": agent.capabilities,
         "status": agent.status,
-        "governance_status": status
+        "governance_status": status,
     }
 
 
@@ -168,8 +169,62 @@ def get_statistics():
         total_agents=agent_stats["total_agents"],
         active_agents=agent_stats["active_agents"],
         avg_trust_score=agent_stats["avg_trust_score"],
-        mutation_performance=mutation_stats
+        mutation_performance=mutation_stats,
+
+        # --- NEW ---
+        trust_threshold=server.mutation_engine.trust_threshold,
+        suppression_threshold=server.mutation_engine.suppression_threshold,
+        drift_delta=server.mutation_engine.drift_delta,
     )
+
+
+@router.get("/events", response_model=List[GovernanceEventV1])
+def get_events(since: Optional[str] = Query(default=None)):
+    if server.telemetry_hub is None:
+        return []
+    try:
+        return server.telemetry_hub.get_events_since(since)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid since timestamp: {e}")
+
+
+@router.get("/cycles", response_model=List[GovernanceCycleResponseV1])
+def get_cycles(limit: int = Query(default=20, ge=1, le=500)):
+    if server.telemetry_hub is None:
+        return []
+    return server.telemetry_hub.get_cycles(limit=limit)
+
+
+@router.get("/events/stream")
+async def stream_events(request: Request):
+    if server.telemetry_hub is None:
+        async def empty_stream():
+            yield ": telemetry_unavailable\n\n"
+        return StreamingResponse(empty_stream(), media_type="text/event-stream")
+
+    token, subscriber = server.telemetry_hub.subscribe(max_queue_size=1000)
+
+    async def event_stream():
+        yield "retry: 1000\n\n"
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    event = await asyncio.to_thread(subscriber.get, True, 1.0)
+                    payload = json.dumps(event.model_dump())
+                    yield f"event: governance_event\ndata: {payload}\n\n"
+                except queue.Empty:
+                    yield ": heartbeat\n\n"
+        finally:
+            server.telemetry_hub.unsubscribe(token)
+
+    headers = {
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+    }
+    return StreamingResponse(event_stream(), media_type="text/event-stream", headers=headers)
 
 
 @router.get("/reflections")
