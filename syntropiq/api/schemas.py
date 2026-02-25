@@ -79,9 +79,12 @@ class SystemStatisticsResponse(BaseModel):
 
 class GovernanceEventType(str, Enum):
     trust_update = "trust_update"
+    circuit_breaker = "circuit_breaker"
     suppression = "suppression"
+    restoration = "restoration"
     mutation = "mutation"
     reflection = "reflection"
+    mediation_decision = "mediation_decision"
     probation = "probation"
     status_change = "status_change"
     threshold_breach = "threshold_breach"
