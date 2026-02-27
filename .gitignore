@@ -14,3 +14,4 @@ node_modules/
 ui/control-plane/node_modules/
 .env
 .env.*
+RUST_REWRITE_REFERENCE.docx
