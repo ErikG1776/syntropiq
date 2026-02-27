@@ -4,3 +4,13 @@ __pycache__/
 .pytest_cache/
 demo_output.json
 *.db
+__pycache__/
+*.pyc
+*.json
+*.csv
+*.csv.gz
+demo_output.txt
+node_modules/
+ui/control-plane/node_modules/
+.env
+.env.*

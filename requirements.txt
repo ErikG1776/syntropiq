@@ -6,6 +6,7 @@ uvicorn[standard]>=0.24.0
 # Optional: LLM executors (install only if using LLMs)
 openai>=1.3.0
 anthropic>=0.7.0
+yfinance>=0.2.0
 
 # Development dependencies (optional)
 pytest>=7.4.0
