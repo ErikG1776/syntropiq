@@ -12,17 +12,20 @@ import random
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from syntropiq.api.telemetry import GovernanceTelemetryHub
 from syntropiq.core.config import SyntropiqConfig
+from syntropiq.core.context import generate_request_id, set_request_id
+from syntropiq.core.logging import configure_logging
 from syntropiq.core.models import Task
 from syntropiq.execution.deterministic_executor import DeterministicExecutor
 from syntropiq.governance.loop import GovernanceLoop
 from syntropiq.governance.mutation_engine import MutationEngine
 from syntropiq.persistence.agent_registry import AgentRegistry
 from syntropiq.persistence.state_manager import PersistentStateManager
+from syntropiq.api.state_manager import PersistentStateManager as TelemetryStateManager
 from syntropiq.demo.fraud.data import RealDataPool, generate_fraud_batch
 from syntropiq.demo.fraud.executor import FraudDetectionExecutor
 from syntropiq.demo.fraud.run import AGENT_PROFILES, DRIFT_AGENT, create_agents
@@ -39,6 +42,7 @@ mutation_engine: MutationEngine = None
 executor: DeterministicExecutor = None
 config: SyntropiqConfig = None
 telemetry_hub: GovernanceTelemetryHub = None
+telemetry_state_manager: TelemetryStateManager = None
 
 demo_stream_task: asyncio.Task | None = None
 demo_stream_running: bool = False
@@ -498,9 +502,10 @@ async def fraud_demo_stream():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global state_manager, agent_registry, governance_loop
-    global mutation_engine, executor, config, telemetry_hub
+    global mutation_engine, executor, config, telemetry_hub, telemetry_state_manager
 
     config = SyntropiqConfig.from_env()
+    configure_logging()
 
     print("\n" + "=" * 60)
     print("🚀 Syntropiq Governance Engine - Starting...")
@@ -509,7 +514,9 @@ async def lifespan(app: FastAPI):
     state_manager = PersistentStateManager(db_path=config.database.db_path)
     agent_registry = AgentRegistry(state_manager)
 
+    telemetry_state_manager = TelemetryStateManager()
     telemetry_hub = GovernanceTelemetryHub(
+        state_manager=telemetry_state_manager,
         max_events=int(os.getenv("GOVERNANCE_EVENT_BUFFER_MAX", "2000")),
         max_cycles=int(os.getenv("GOVERNANCE_CYCLE_BUFFER_MAX", "500")),
     )
@@ -571,6 +578,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("x-request-id") or generate_request_id()
+    set_request_id(request_id)
+    response = await call_next(request)
+    response.headers["x-request-id"] = request_id
+    return response
 
 
 @app.get("/")

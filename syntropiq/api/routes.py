@@ -22,6 +22,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from syntropiq.core.models import Task
 from syntropiq.api.schemas import (
+    ActorSchema,
     AgentRegistrationRequest,
     AgentResponse,
     GovernanceCycleResponse,
@@ -42,6 +43,32 @@ def _emit_event(event: dict):
     if server.telemetry_hub is None:
         return
     server.telemetry_hub.publish_events([event])
+
+
+def _actor_dict(actor: Optional[ActorSchema | dict]) -> Optional[dict]:
+    if actor is None:
+        return None
+    if hasattr(actor, "model_dump"):
+        data = actor.model_dump()
+    elif isinstance(actor, dict):
+        data = dict(actor)
+    else:
+        return None
+
+    user_id = data.get("user_id")
+    role = data.get("role")
+    source = data.get("source") or "control-plane"
+    if not isinstance(user_id, str) or not isinstance(role, str):
+        return None
+    return {"user_id": user_id, "role": role, "source": source}
+
+
+def _with_actor_metadata(metadata: Optional[dict], actor: Optional[ActorSchema | dict]) -> dict:
+    merged = dict(metadata or {})
+    actor_payload = _actor_dict(actor)
+    if actor_payload is not None:
+        merged["actor"] = actor_payload
+    return merged
 
 
 CIRCUIT_STATE = {
@@ -123,6 +150,13 @@ class GovernanceExecuteRequest(BaseModel):
     task: TaskSchema
     run_id: Optional[str] = None
     strategy: Optional[str] = None
+    actor: Optional[ActorSchema] = None
+
+
+class UpdateAgentStatusRequest(BaseModel):
+    agent_id: str
+    status: str
+    actor: Optional[ActorSchema] = None
 
 
 router = APIRouter(prefix="/api/v1", tags=["syntropiq"])
@@ -187,6 +221,7 @@ def submit_tasks(request: TaskSubmissionRequest):
 
 @router.post("/governance/execute")
 def governance_execute(request: GovernanceExecuteRequest):
+    actor = _actor_dict(request.actor)
     task_obj = Task(
         id=request.task.id,
         impact=request.task.impact,
@@ -310,10 +345,13 @@ def governance_execute(request: GovernanceExecuteRequest):
         "trust_after": 0.0,
         "authority_before": 0.0,
         "authority_after": 0.0,
-        "metadata": {
-            **(mediation_metadata or {}),
-            "task_id": getattr(request.task, "id", None),
-        },
+        "metadata": _with_actor_metadata(
+            {
+                **(mediation_metadata or {}),
+                "task_id": getattr(request.task, "id", None),
+            },
+            actor,
+        ),
     }
     _emit_event(mediation_event)
 
@@ -376,7 +414,7 @@ def governance_execute(request: GovernanceExecuteRequest):
                     "trust_after": 0.0,
                     "authority_before": 0.0,
                     "authority_after": 0.0,
-                    "metadata": dict(result.get("mutation", {})),
+                    "metadata": _with_actor_metadata(dict(result.get("mutation", {})), actor),
                 }
             )
 
@@ -494,8 +532,7 @@ def get_agent_status(agent_id: str):
     }
 
 
-@router.put("/agents/{agent_id}/status")
-def update_agent_status(agent_id: str, status: str):
+def _apply_agent_status_update(agent_id: str, status: str, actor: Optional[ActorSchema | dict] = None):
     prev = server.agent_registry.get_agent(agent_id)
     prev_status = prev.status if prev else None
     prev_trust = prev.trust_score if prev else 0.0
@@ -524,17 +561,34 @@ def update_agent_status(agent_id: str, status: str):
                 "trust_after": float(prev_trust),
                 "authority_before": 1.0,
                 "authority_after": 0.0 if status == "suppressed" else 1.0,
-                "metadata": {
-                    "reason": "manual_override",
-                    "previous_status": prev_status,
-                    "new_status": status,
-                },
+                "metadata": _with_actor_metadata(
+                    {
+                        "reason": "manual_override",
+                        "previous_status": prev_status,
+                        "new_status": status,
+                    },
+                    actor,
+                ),
             }
             _emit_event(evt)
 
         return {"agent_id": agent_id, "new_status": status}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/agents/{agent_id}/status")
+def update_agent_status(agent_id: str, status: str):
+    return _apply_agent_status_update(agent_id=agent_id, status=status, actor=None)
+
+
+@router.put("/agents/status")
+def update_agent_status_body(request: UpdateAgentStatusRequest):
+    return _apply_agent_status_update(
+        agent_id=request.agent_id,
+        status=request.status,
+        actor=request.actor,
+    )
 
 
 @router.get("/statistics", response_model=SystemStatisticsResponse)
@@ -558,6 +612,17 @@ def get_statistics():
         suppression_threshold=server.mutation_engine.suppression_threshold,
         drift_delta=server.mutation_engine.drift_delta,
     )
+
+
+@router.get("/metrics")
+def get_metrics():
+    if server.telemetry_hub is None:
+        return {
+            "execute_calls": 0,
+            "suppression_events": 0,
+            "circuit_trips": 0,
+        }
+    return server.telemetry_hub.metrics()
 
 
 @router.get("/events", response_model=List[GovernanceEventV1])

@@ -140,6 +140,23 @@ class PersistentStateManager:
             )
         """)
 
+        # Events table (durable telemetry)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id TEXT,
+                cycle_id TEXT,
+                event_type TEXT NOT NULL,
+                agent_id TEXT,
+                trust_before REAL,
+                trust_after REAL,
+                authority_before REAL,
+                authority_after REAL,
+                metadata TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         self.conn.commit()
 
     def get_trust_scores(self) -> Dict[str, float]:
@@ -426,6 +443,40 @@ class PersistentStateManager:
             'suppressed_agents': suppressed_count,
             'valid_reflections': valid_reflections
         }
+
+    def save_event(self, event: dict):
+        """
+        Persist a governance event to SQLite.
+        """
+        cursor = self.conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO events (
+                run_id,
+                cycle_id,
+                timestamp,
+                event_type,
+                agent_id,
+                trust_before,
+                trust_after,
+                authority_before,
+                authority_after,
+                metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            event.get("run_id"),
+            event.get("cycle_id"),
+            event.get("timestamp"),
+            event.get("type"),
+            event.get("agent_id"),
+            event.get("trust_before", 0.0),
+            event.get("trust_after", 0.0),
+            event.get("authority_before", 0.0),
+            event.get("authority_after", 0.0),
+            json.dumps(event.get("metadata", {})),
+        ))
+
+        self.conn.commit()
 
     def close(self):
         """Close database connection."""
