@@ -13,14 +13,37 @@ import asyncio
 import json
 import queue
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 import uuid
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from syntropiq.core.context import get_request_id
+from syntropiq.core.invariants import (
+    InvariantViolation,
+    Invariants,
+    emit_violations,
+    mode_from_env,
+)
+from syntropiq.core.replay import compare_runs, compute_r, load_run_artifacts, replay_run
 from syntropiq.core.models import Task
+from syntropiq.optimize.bayes_posterior import posterior_from_cycles
+from syntropiq.optimize.config import (
+    get_bayes_mode,
+    get_current_lambda,
+    get_default_lambda_vector,
+    get_lambda_adapt_mode,
+    get_optimize_mode,
+    set_current_lambda,
+)
+from syntropiq.optimize.lambda_adaptation import compute_adaptive_lambda
+from syntropiq.optimize.lambda_optimizer import optimize_tasks
+from syntropiq.optimize.schema import LambdaVector, OptimizeInput
+from syntropiq.reflect.config import get_reflect_consensus_mode, get_reflect_mode
+from syntropiq.reflect.consensus import PerspectiveProfile, run_consensus_reflect
+from syntropiq.reflect.engine import run_reflect
 from syntropiq.api.schemas import (
     ActorSchema,
     AgentRegistrationRequest,
@@ -43,6 +66,16 @@ def _emit_event(event: dict):
     if server.telemetry_hub is None:
         return
     server.telemetry_hub.publish_events([event])
+
+
+def _emit_invariant_alerts(violations: list[InvariantViolation], base_metadata: Optional[dict] = None) -> None:
+    if not violations:
+        return
+    if mode_from_env() == "off":
+        return
+    if server.telemetry_hub is None:
+        return
+    emit_violations(server.telemetry_hub, violations, base_metadata=base_metadata)
 
 
 def _actor_dict(actor: Optional[ActorSchema | dict]) -> Optional[dict]:
@@ -85,6 +118,20 @@ def _emit_circuit_breaker(run_id: str, reason: str):
         else 0.0
     )
     cycle_id = f"{run_id}:circuit:{uuid.uuid4().hex[:8]}"
+
+    cooldown_violations = Invariants.check_cooldown_bound(CIRCUIT_STATE.get("cooldown_cycles"))
+    _emit_invariant_alerts(
+        cooldown_violations,
+        {
+            "run_id": run_id,
+            "cycle_id": cycle_id,
+            "timestamp": timestamp,
+            "request_id": get_request_id(),
+            "component": "circuit_breaker",
+            "reason": reason,
+        },
+    )
+
     event = {
         "run_id": run_id,
         "cycle_id": cycle_id,
@@ -156,6 +203,47 @@ class GovernanceExecuteRequest(BaseModel):
 class UpdateAgentStatusRequest(BaseModel):
     agent_id: str
     status: str
+    actor: Optional[ActorSchema] = None
+
+
+class ReplayValidateRequest(BaseModel):
+    run_id: str
+    threshold: float = 0.99
+    seed: Optional[int] = None
+    mode: str = "light"
+    actor: Optional[ActorSchema] = None
+
+
+class OptimizeScoreRequest(BaseModel):
+    run_id: str = "OPT_RUN"
+    tasks: List[TaskSchema]
+    lambda_values: Optional[Dict[str, float]] = Field(default=None, alias="lambda")
+    context: Dict[str, Any] = Field(default_factory=dict)
+    trust_by_agent: Optional[Dict[str, float]] = None
+    actor: Optional[ActorSchema] = None
+
+
+class ReflectRunRequest(BaseModel):
+    run_id: str
+    cycle_id: str
+    horizon_steps: int = 5
+    theta: float = 0.10
+    weights_decay: float = 0.85
+    actor: Optional[ActorSchema] = None
+
+
+class OptimizeLambdaRequest(BaseModel):
+    run_id: str = "GLOBAL"
+    signals: Dict[str, Any] = Field(default_factory=dict)
+    base_lambda: Optional[Dict[str, float]] = Field(default=None, alias="base_lambda")
+
+
+class ReflectConsensusRequest(BaseModel):
+    run_id: str
+    cycle_id: str
+    horizon_steps: int = 5
+    theta: float = 0.10
+    profiles: Optional[List[Dict[str, Any]]] = None
     actor: Optional[ActorSchema] = None
 
 
@@ -231,6 +319,27 @@ def governance_execute(request: GovernanceExecuteRequest):
     )
 
     run_id = request.run_id or "EXEC_GATEWAY"
+
+    request_id = get_request_id()
+    start_violations = []
+    start_violations.extend(Invariants.check_request_id_present(request_id))
+    tau_value = (
+        float(getattr(server.mutation_engine, "trust_threshold", 0.0))
+        if server.mutation_engine is not None
+        else None
+    )
+    start_violations.extend(Invariants.check_tau_range(tau_value) if tau_value is not None else [])
+    _emit_invariant_alerts(
+        start_violations,
+        {
+            "run_id": run_id,
+            "cycle_id": f"{run_id}:execute:start",
+            "timestamp": _utc_ts(),
+            "request_id": request_id,
+            "component": "governance_execute",
+            "actor": actor,
+        },
+    )
 
     # Load all agents
     agents_dict = server.agent_registry.get_agents_dict()
@@ -314,6 +423,39 @@ def governance_execute(request: GovernanceExecuteRequest):
         selected_ids = selector(eligible_agent_map, n=2)
     else:
         selected_ids = selector(eligible_agent_map)
+
+    selection_violations = []
+    if not strategy_name:
+        selection_violations.append(
+            InvariantViolation(
+                name="strategy_present",
+                severity="warn",
+                expected="non-empty strategy",
+                actual=str(strategy_name),
+                context={"strategy": strategy_name},
+            )
+        )
+    if len(selected_ids) == 0:
+        selection_violations.append(
+            InvariantViolation(
+                name="selected_agents_non_empty",
+                severity="warn",
+                expected="selected_agents length > 0 on success path",
+                actual="0",
+                context={"strategy": strategy_name, "eligible": list(eligible_agent_map.keys())},
+            )
+        )
+    _emit_invariant_alerts(
+        selection_violations,
+        {
+            "run_id": run_id,
+            "cycle_id": f"{run_id}:execute:selection",
+            "timestamp": _utc_ts(),
+            "request_id": request_id,
+            "component": "governance_execute",
+            "actor": actor,
+        },
+    )
 
     selected_agent_map = {
         agent_id: eligible_agent_map[agent_id]["agent"]
@@ -640,6 +782,531 @@ def get_cycles(limit: int = Query(default=20, ge=1, le=500)):
     if server.telemetry_hub is None:
         return []
     return server.telemetry_hub.get_cycles(limit=limit)
+
+
+@router.get("/audit/verify")
+def verify_audit_chain(chain_id: str = Query(default="GLOBAL")):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        return {
+            "chain_id": chain_id,
+            "events": {"ok": True, "checked": 0, "first_bad_index": None, "reason": "telemetry_state_unavailable"},
+            "cycles": {"ok": True, "checked": 0, "first_bad_index": None, "reason": "telemetry_state_unavailable"},
+        }
+
+    return {
+        "chain_id": chain_id,
+        "events": manager.verify_events_chain(chain_id=chain_id),
+        "cycles": manager.verify_cycles_chain(chain_id=chain_id),
+    }
+
+
+@router.post("/replay/validate")
+def replay_validate(request: ReplayValidateRequest):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+
+    mode = request.mode if request.mode in {"light", "full"} else "light"
+    threshold = float(request.threshold)
+    actor = _actor_dict(request.actor)
+    request_id = get_request_id()
+
+    artifacts = load_run_artifacts(manager, request.run_id)
+    if not artifacts.get("cycles"):
+        raise HTTPException(status_code=404, detail="run_artifacts_not_found")
+
+    replayed = replay_run(artifacts, seed=request.seed, mode=mode)
+    comparison = compare_runs(artifacts, replayed)
+    r_score = compute_r(comparison)
+    ok = r_score >= threshold
+
+    component_scores = {
+        "selection_match": comparison.selection_match,
+        "trust_corr": comparison.trust_corr,
+        "threshold_corr": comparison.threshold_corr,
+        "suppression_match": comparison.suppression_match,
+    }
+    details = {
+        "diagnostics": comparison.diagnostics,
+        "mode_requested": request.mode,
+        "mode_used": replayed.get("mode", mode),
+        "explanation": replayed.get("explanation"),
+        "request_id": request_id,
+    }
+    if actor is not None:
+        details["actor"] = actor
+
+    persisted = manager.save_replay_validation(
+        {
+            "run_id": request.run_id,
+            "r_score": r_score,
+            "component_scores": component_scores,
+            "ok": ok,
+            "threshold": threshold,
+            "details": details,
+        }
+    )
+
+    return {
+        "ok": ok,
+        "run_id": request.run_id,
+        "r_score": r_score,
+        "threshold": threshold,
+        "components": component_scores,
+        "diagnostics": comparison.diagnostics,
+        "mode": replayed.get("mode", mode),
+        "explanation": replayed.get("explanation"),
+        "validation_id": persisted.get("id"),
+        "request_id": request_id,
+        "actor": actor,
+    }
+
+
+@router.post("/optimize/score")
+def optimize_score(request: OptimizeScoreRequest):
+    mode = get_optimize_mode()
+    if mode not in {"score", "integrate"}:
+        raise HTTPException(status_code=403, detail="optimize_disabled")
+
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+
+    request_id = get_request_id()
+    actor = _actor_dict(request.actor)
+
+    tasks = [
+        Task(
+            id=task.id,
+            impact=task.impact,
+            urgency=task.urgency,
+            risk=task.risk,
+            metadata=task.metadata or {},
+        )
+        for task in request.tasks
+    ]
+
+    if request.trust_by_agent:
+        trust_by_agent = {str(k): float(v) for k, v in request.trust_by_agent.items()}
+    else:
+        trust_by_agent = {}
+        if getattr(server, "agent_registry", None) is not None:
+            agents = server.agent_registry.get_agents_dict()
+            trust_by_agent = {
+                aid: float(getattr(agent, "trust_score", 0.0))
+                for aid, agent in agents.items()
+                if getattr(agent, "status", "active") != "suppressed"
+            }
+
+    if request.lambda_values:
+        lam = LambdaVector(
+            l_cost=float(request.lambda_values.get("l_cost", 0.25)),
+            l_time=float(request.lambda_values.get("l_time", 0.25)),
+            l_risk=float(request.lambda_values.get("l_risk", 0.25)),
+            l_trust=float(request.lambda_values.get("l_trust", 0.25)),
+        ).enforce_bounds().normalize()
+    else:
+        lam = get_current_lambda(request.run_id)
+
+    context = {"V_prime": dict(request.context or {})}
+
+    optimize_input = OptimizeInput(
+        tasks=tasks,
+        trust_by_agent=trust_by_agent,
+        context=context,
+        actor=actor,
+        request_id=request_id,
+    )
+    decision = optimize_tasks(
+        input=optimize_input,
+        lambda_vector=lam,
+        run_id=request.run_id,
+    )
+    persisted = manager.save_optimization_event(decision.to_dict())
+
+    adapt_mode = get_lambda_adapt_mode()
+    bayes_mode = get_bayes_mode()
+    adaptation_payload = None
+    posterior_payload = None
+
+    if adapt_mode in {"log", "apply"}:
+        recent_cycles = manager.load_cycles_by_run_id(request.run_id, limit=50)
+        success_total = sum(int(c.get("successes", 0)) for c in recent_cycles[-10:])
+        fail_total = sum(int(c.get("failures", 0)) for c in recent_cycles[-10:])
+        denom = success_total + fail_total
+        failure_rate = (fail_total / denom) if denom > 0 else 0.0
+
+        bayes_multiplier = 1.0
+        if bayes_mode in {"log", "apply"}:
+            posterior_payload = posterior_from_cycles(recent_cycles[-50:])
+            manager.save_bayes_posterior(
+                {
+                    "run_id": request.run_id,
+                    **posterior_payload,
+                }
+            )
+            if bayes_mode == "apply":
+                bayes_multiplier = float(posterior_payload.get("suggested_risk_multiplier", 1.0))
+
+        avg_trust = (
+            sum(float(v) for v in trust_by_agent.values()) / len(trust_by_agent)
+            if trust_by_agent
+            else 0.0
+        )
+        suppression_active = any(float(v) < float(getattr(server.mutation_engine, "suppression_threshold", 0.75)) for v in trust_by_agent.values())
+        replay_rows = manager.load_replay_validations(request.run_id, limit=1)
+        r_latest = float(replay_rows[0]["r_score"]) if replay_rows else None
+
+        signals = {
+            "avg_trust": avg_trust,
+            "suppression_active": suppression_active,
+            "drift_delta": float(getattr(server.mutation_engine, "drift_delta", 0.1)),
+            "r_score_latest": r_latest,
+            "A_score": float(decision.alignment_score),
+            "failure_rate": failure_rate,
+            "bayes_risk_multiplier": bayes_multiplier,
+        }
+        recommended, deltas = compute_adaptive_lambda(
+            base=lam,
+            signals=signals,
+            bounds={"max_step": 0.02, "max_trust": 0.3},
+        )
+        adaptation_payload = {
+            "old_lambda": lam.as_dict(),
+            "new_lambda": recommended.as_dict(),
+            "deltas": deltas,
+            "signals": signals,
+            "mode": adapt_mode,
+        }
+        manager.save_lambda_history(
+            {
+                "run_id": request.run_id,
+                **adaptation_payload,
+            }
+        )
+        if adapt_mode == "apply":
+            set_current_lambda(recommended, run_id=request.run_id)
+
+    response = dict(persisted)
+    if adaptation_payload is not None:
+        response["lambda_adaptation"] = adaptation_payload
+    if posterior_payload is not None:
+        response["bayes_posterior"] = posterior_payload
+    return response
+
+
+@router.post("/optimize/lambda/recommend")
+def optimize_lambda_recommend(request: OptimizeLambdaRequest):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+
+    if request.base_lambda:
+        base = LambdaVector(
+            l_cost=float(request.base_lambda.get("l_cost", 0.25)),
+            l_time=float(request.base_lambda.get("l_time", 0.25)),
+            l_risk=float(request.base_lambda.get("l_risk", 0.25)),
+            l_trust=float(request.base_lambda.get("l_trust", 0.25)),
+        ).enforce_bounds().normalize()
+    else:
+        base = get_current_lambda(request.run_id)
+
+    recommended, deltas = compute_adaptive_lambda(
+        base=base,
+        signals=dict(request.signals or {}),
+        bounds={"max_step": 0.02, "max_trust": 0.3},
+    )
+    payload = {
+        "run_id": request.run_id,
+        "old_lambda": base.as_dict(),
+        "new_lambda": recommended.as_dict(),
+        "deltas": deltas,
+        "signals": dict(request.signals or {}),
+        "mode": "recommend",
+    }
+    manager.save_lambda_history(payload)
+    return payload
+
+
+@router.post("/optimize/lambda/apply")
+def optimize_lambda_apply(request: OptimizeLambdaRequest):
+    if get_lambda_adapt_mode() != "apply":
+        raise HTTPException(status_code=403, detail="lambda_apply_disabled")
+
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+
+    base = get_current_lambda(request.run_id)
+    if request.base_lambda:
+        base = LambdaVector(
+            l_cost=float(request.base_lambda.get("l_cost", 0.25)),
+            l_time=float(request.base_lambda.get("l_time", 0.25)),
+            l_risk=float(request.base_lambda.get("l_risk", 0.25)),
+            l_trust=float(request.base_lambda.get("l_trust", 0.25)),
+        ).enforce_bounds().normalize()
+
+    recommended, deltas = compute_adaptive_lambda(
+        base=base,
+        signals=dict(request.signals or {}),
+        bounds={"max_step": 0.02, "max_trust": 0.3},
+    )
+    set_current_lambda(recommended, run_id=request.run_id)
+    payload = {
+        "run_id": request.run_id,
+        "old_lambda": base.as_dict(),
+        "new_lambda": recommended.as_dict(),
+        "deltas": deltas,
+        "signals": dict(request.signals or {}),
+        "mode": "apply",
+    }
+    manager.save_lambda_history(payload)
+    return payload
+
+
+@router.get("/optimize/lambda/history")
+def optimize_lambda_history(run_id: str = Query(...), limit: int = Query(default=50, ge=1, le=500)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.load_lambda_history(run_id=run_id, limit=limit)
+
+
+@router.get("/optimize/lambda/verify")
+def optimize_lambda_verify(run_id: str = Query(...), limit: int = Query(default=200, ge=1, le=2000)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.verify_lambda_chain(run_id=run_id, limit=limit)
+
+
+@router.get("/optimize/events")
+def get_optimization_events(run_id: str = Query(...), limit: int = Query(default=50, ge=1, le=500)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.load_optimization_events(run_id=run_id, limit=limit)
+
+
+@router.get("/optimize/verify")
+def verify_optimization_events(run_id: str = Query(...), limit: int = Query(default=200, ge=1, le=2000)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.verify_optimization_chain(run_id=run_id, limit=limit)
+
+
+@router.get("/optimize/bayes")
+def optimize_bayes(run_id: str = Query(...), window: int = Query(default=50, ge=1, le=500)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    cycles = manager.load_cycles_by_run_id(run_id=run_id, limit=window)
+    posterior = posterior_from_cycles(cycles)
+    payload = {"run_id": run_id, **posterior}
+    if get_bayes_mode() in {"log", "apply"}:
+        manager.save_bayes_posterior(payload)
+    return payload
+
+
+@router.get("/optimize/bayes/verify")
+def optimize_bayes_verify(run_id: str = Query(...), limit: int = Query(default=200, ge=1, le=2000)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.verify_bayes_chain(run_id=run_id, limit=limit)
+
+
+@router.post("/reflect/run")
+def reflect_run(request: ReflectRunRequest):
+    mode = get_reflect_mode()
+    if mode not in {"score", "integrate"}:
+        raise HTTPException(status_code=403, detail="reflect_disabled")
+
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+
+    actor = _actor_dict(request.actor)
+    request_id = get_request_id()
+
+    trust_by_agent: Dict[str, float] = {}
+    if getattr(server, "agent_registry", None) is not None:
+        agents = server.agent_registry.get_agents_dict()
+        trust_by_agent = {
+            aid: float(getattr(agent, "trust_score", 0.0))
+            for aid, agent in agents.items()
+        }
+
+    thresholds = {
+        "trust_threshold": float(getattr(server.mutation_engine, "trust_threshold", 0.7)),
+        "suppression_threshold": float(getattr(server.mutation_engine, "suppression_threshold", 0.75)),
+        "drift_delta": float(getattr(server.mutation_engine, "drift_delta", 0.1)),
+    }
+
+    suppression_active = False
+    if getattr(server, "governance_loop", None) is not None and hasattr(server.governance_loop, "trust_engine"):
+        suppressed = getattr(server.governance_loop.trust_engine, "suppressed_agents", {})
+        suppression_active = bool(suppressed)
+
+    recent_cycles = manager.load_cycles_by_run_id(request.run_id, limit=50)
+    recent_events = manager.load_events_by_run_id(request.run_id, limit=200)
+    if not suppression_active:
+        suppression_active = any(event.get("type") == "suppression" for event in recent_events[-20:])
+
+    latest_replay_score = None
+    replay_rows = manager.load_replay_validations(request.run_id, limit=1)
+    if replay_rows:
+        latest_replay_score = float(replay_rows[0].get("r_score", 0.0))
+
+    decision = run_reflect(
+        run_id=request.run_id,
+        cycle_id=request.cycle_id,
+        timestamp=_utc_ts(),
+        trust_by_agent=trust_by_agent,
+        thresholds=thresholds,
+        suppression_active=suppression_active,
+        recent_cycles=recent_cycles,
+        recent_events=recent_events,
+        actor=actor,
+        request_id=request_id,
+        horizon_steps=request.horizon_steps,
+        theta=request.theta,
+        weights_decay=request.weights_decay,
+        mode="integrate" if mode == "integrate" else "score",
+        latest_replay_score=latest_replay_score,
+    )
+
+    persisted = manager.save_reflect_decision(decision.to_dict())
+    consensus_mode = get_reflect_consensus_mode()
+    if consensus_mode in {"log", "integrate"}:
+        consensus = run_consensus_reflect(
+            run_id=request.run_id,
+            cycle_id=request.cycle_id,
+            timestamp=_utc_ts(),
+            trust_by_agent=trust_by_agent,
+            thresholds=thresholds,
+            suppression_active=suppression_active,
+            recent_cycles=recent_cycles,
+            recent_events=recent_events,
+            actor=actor,
+            request_id=request_id,
+            horizon_steps=request.horizon_steps,
+            theta=request.theta,
+            latest_replay_score=latest_replay_score,
+        )
+        manager.save_consensus_insight(
+            {
+                "run_id": request.run_id,
+                "cycle_id": request.cycle_id,
+                "timestamp": _utc_ts(),
+                **consensus,
+                "metadata": {"actor": actor, "request_id": request_id, "mode": consensus_mode},
+            }
+        )
+        if consensus_mode == "integrate":
+            persisted = dict(persisted)
+            persisted["consensus"] = consensus
+    return persisted
+
+
+@router.get("/reflect/decisions")
+def get_reflect_decisions(run_id: str = Query(...), limit: int = Query(default=50, ge=1, le=500)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.load_reflect_decisions(run_id=run_id, limit=limit)
+
+
+@router.get("/reflect/verify")
+def verify_reflect_decisions(run_id: str = Query(...), limit: int = Query(default=200, ge=1, le=2000)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.verify_reflect_chain(run_id=run_id, limit=limit)
+
+
+@router.post("/reflect/consensus")
+def reflect_consensus(request: ReflectConsensusRequest):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+
+    actor = _actor_dict(request.actor)
+    request_id = get_request_id()
+    trust_by_agent: Dict[str, float] = {}
+    if getattr(server, "agent_registry", None) is not None:
+        agents = server.agent_registry.get_agents_dict()
+        trust_by_agent = {aid: float(getattr(agent, "trust_score", 0.0)) for aid, agent in agents.items()}
+
+    thresholds = {
+        "trust_threshold": float(getattr(server.mutation_engine, "trust_threshold", 0.7)),
+        "suppression_threshold": float(getattr(server.mutation_engine, "suppression_threshold", 0.75)),
+        "drift_delta": float(getattr(server.mutation_engine, "drift_delta", 0.1)),
+    }
+    suppression_active = False
+    if getattr(server, "governance_loop", None) is not None and hasattr(server.governance_loop, "trust_engine"):
+        suppression_active = bool(getattr(server.governance_loop.trust_engine, "suppressed_agents", {}))
+    recent_cycles = manager.load_cycles_by_run_id(request.run_id, limit=50)
+    recent_events = manager.load_events_by_run_id(request.run_id, limit=200)
+    replay_rows = manager.load_replay_validations(request.run_id, limit=1)
+    latest_replay_score = float(replay_rows[0].get("r_score", 0.0)) if replay_rows else None
+
+    profiles = None
+    if request.profiles:
+        profiles = [
+            PerspectiveProfile(
+                name=str(item.get("name", "custom")),
+                weights_decay=float(item.get("weights_decay", 0.85)),
+                constraint_weight_overrides=dict(item.get("constraint_weight_overrides", {})),
+                theta_override=float(item["theta_override"]) if item.get("theta_override") is not None else None,
+            )
+            for item in request.profiles
+        ]
+
+    consensus = run_consensus_reflect(
+        run_id=request.run_id,
+        cycle_id=request.cycle_id,
+        timestamp=_utc_ts(),
+        trust_by_agent=trust_by_agent,
+        thresholds=thresholds,
+        suppression_active=suppression_active,
+        recent_cycles=recent_cycles,
+        recent_events=recent_events,
+        actor=actor,
+        request_id=request_id,
+        horizon_steps=request.horizon_steps,
+        theta=request.theta,
+        latest_replay_score=latest_replay_score,
+        profiles=profiles,
+    )
+    persisted = manager.save_consensus_insight(
+        {
+            "run_id": request.run_id,
+            "cycle_id": request.cycle_id,
+            "timestamp": _utc_ts(),
+            **consensus,
+            "metadata": {"actor": actor, "request_id": request_id},
+        }
+    )
+    return persisted
+
+
+@router.get("/reflect/consensus/decisions")
+def reflect_consensus_decisions(run_id: str = Query(...), limit: int = Query(default=50, ge=1, le=500)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.load_consensus_insights(run_id=run_id, limit=limit)
+
+
+@router.get("/reflect/consensus/verify")
+def reflect_consensus_verify(run_id: str = Query(...), limit: int = Query(default=200, ge=1, le=2000)):
+    manager = getattr(server, "telemetry_state_manager", None)
+    if manager is None:
+        raise HTTPException(status_code=503, detail="telemetry_state_unavailable")
+    return manager.verify_consensus_chain(run_id=run_id, limit=limit)
 
 
 @router.get("/events/stream")

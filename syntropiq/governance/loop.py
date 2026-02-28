@@ -21,6 +21,12 @@ from syntropiq.governance.mutation_engine import MutationEngine
 from syntropiq.governance.prioritizer import OptimusPrioritizer
 from syntropiq.governance.reflection_engine import evaluate_reflection
 from syntropiq.governance.trust_engine import SyntropiqTrustEngine
+from syntropiq.optimize.config import get_default_lambda_vector, get_optimize_mode
+from syntropiq.optimize.lambda_optimizer import optimize_tasks
+from syntropiq.optimize.schema import OptimizeInput
+from syntropiq.reflect.config import get_reflect_consensus_mode, get_reflect_mode
+from syntropiq.reflect.consensus import run_consensus_reflect
+from syntropiq.reflect.engine import run_reflect
 from syntropiq.persistence.state_manager import PersistentStateManager
 
 
@@ -80,6 +86,34 @@ class GovernanceLoop:
         prioritized = self.prioritizer.optimize(tasks)
         sorted_tasks = prioritized["sorted_tasks"]
 
+        if get_optimize_mode() == "integrate" and sorted_tasks:
+            try:
+                trust_by_agent = {aid: float(agent.trust_score) for aid, agent in agents.items()}
+                optimize_input = OptimizeInput(
+                    tasks=sorted_tasks,
+                    trust_by_agent=trust_by_agent,
+                    context={
+                        "source": "governance_loop",
+                        "run_id": run_id,
+                        "cycle_id": cycle_id,
+                    },
+                )
+                decision = optimize_tasks(
+                    input=optimize_input,
+                    lambda_vector=get_default_lambda_vector(),
+                    run_id=run_id,
+                )
+                by_id = {task.id: task for task in sorted_tasks}
+                sorted_tasks = [by_id[task_id] for task_id in decision.chosen_task_ids if task_id in by_id]
+
+                if self.telemetry is not None:
+                    telemetry_state = getattr(self.telemetry, "_state_manager", None)
+                    if telemetry_state is not None and hasattr(telemetry_state, "save_optimization_event"):
+                        telemetry_state.save_optimization_event(decision.to_dict())
+            except Exception:
+                # Keep integrate mode non-invasive: optimization failures must not block execution.
+                pass
+
         try:
             assignments = self.trust_engine.assign_agents(sorted_tasks, agents)
         except RuntimeError as e:
@@ -116,6 +150,7 @@ class GovernanceLoop:
         mutation_result = self.mutation_engine.evaluate_and_mutate(
             execution_results=results,
             cycle_id=cycle_id,
+            suppression_active=bool(self.trust_engine.suppressed_agents),
         )
         self.trust_engine.trust_threshold = mutation_result["trust_threshold"]
         self.trust_engine.suppression_threshold = mutation_result["suppression_threshold"]
@@ -186,6 +221,78 @@ class GovernanceLoop:
                     )
             except Exception as telemetry_err:  # pragma: no cover
                 print(f"Telemetry emit failed: {telemetry_err}")
+
+        if get_reflect_mode() == "integrate":
+            try:
+                telemetry_state = getattr(self.telemetry, "_state_manager", None) if self.telemetry is not None else None
+                if telemetry_state is not None and hasattr(telemetry_state, "save_reflect_decision"):
+                    recent_cycles = (
+                        telemetry_state.load_cycles_by_run_id(run_id, limit=50)
+                        if hasattr(telemetry_state, "load_cycles_by_run_id")
+                        else []
+                    )
+                    recent_events = (
+                        telemetry_state.load_events_by_run_id(run_id, limit=200)
+                        if hasattr(telemetry_state, "load_events_by_run_id")
+                        else []
+                    )
+                    replay_rows = (
+                        telemetry_state.load_replay_validations(run_id, limit=1)
+                        if hasattr(telemetry_state, "load_replay_validations")
+                        else []
+                    )
+                    latest_replay = float(replay_rows[0].get("r_score", 0.0)) if replay_rows else None
+
+                    reflect_decision = run_reflect(
+                        run_id=run_id,
+                        cycle_id=cycle_id,
+                        timestamp=timestamp,
+                        trust_by_agent=trust_after,
+                        thresholds={
+                            "trust_threshold": float(self.trust_engine.trust_threshold),
+                            "suppression_threshold": float(self.trust_engine.suppression_threshold),
+                            "drift_delta": float(self.trust_engine.drift_delta),
+                        },
+                        suppression_active=bool(self.trust_engine.suppressed_agents),
+                        recent_cycles=recent_cycles,
+                        recent_events=recent_events,
+                        horizon_steps=5,
+                        theta=0.10,
+                        weights_decay=0.85,
+                        mode="integrate",
+                        latest_replay_score=latest_replay,
+                    )
+                    telemetry_state.save_reflect_decision(reflect_decision.to_dict())
+                    if get_reflect_consensus_mode() == "integrate" and hasattr(telemetry_state, "save_consensus_insight"):
+                        consensus = run_consensus_reflect(
+                            run_id=run_id,
+                            cycle_id=cycle_id,
+                            timestamp=timestamp,
+                            trust_by_agent=trust_after,
+                            thresholds={
+                                "trust_threshold": float(self.trust_engine.trust_threshold),
+                                "suppression_threshold": float(self.trust_engine.suppression_threshold),
+                                "drift_delta": float(self.trust_engine.drift_delta),
+                            },
+                            suppression_active=bool(self.trust_engine.suppressed_agents),
+                            recent_cycles=recent_cycles,
+                            recent_events=recent_events,
+                            horizon_steps=5,
+                            theta=0.10,
+                            latest_replay_score=latest_replay,
+                        )
+                        telemetry_state.save_consensus_insight(
+                            {
+                                "run_id": run_id,
+                                "cycle_id": cycle_id,
+                                "timestamp": timestamp,
+                                **consensus,
+                                "metadata": {"source": "governance_loop_integrate"},
+                            }
+                        )
+            except Exception:
+                # Reflect integration is advisory; failures must not impact cycle execution.
+                pass
 
         return {
             "run_id": run_id,

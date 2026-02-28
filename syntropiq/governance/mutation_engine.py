@@ -10,7 +10,9 @@ Automatically tunes governance parameters:
 - Drift detection delta (sensitivity to performance changes)
 """
 
-from typing import Dict, List, Optional, TYPE_CHECKING
+import os
+from typing import Callable, Dict, List, Optional, TYPE_CHECKING
+from syntropiq.core.invariants import Invariants, emit_violations
 from syntropiq.core.models import ExecutionResult
 
 if TYPE_CHECKING:
@@ -33,7 +35,11 @@ class MutationEngine:
         mutation_rate: float = 0.05,  # How much to adjust per cycle
         target_success_rate: float = 0.85,  # Target system performance
         state_manager: Optional["PersistentStateManager"] = None,
-        history_window: int = 100
+        history_window: int = 100,
+        invariant_reporter: Optional[Callable[[List, Dict], None]] = None,
+        warmup_cycles: int = int(os.getenv("MUTATION_WARMUP_CYCLES", "5")),
+        max_step: float = float(os.getenv("MUTATION_MAX_STEP", "0.02")),
+        suppression_dampen: bool = os.getenv("MUTATION_DAMPEN_ON_SUPPRESSION", "true").lower() == "true",
     ):
         """
         Initialize mutation engine.
@@ -54,6 +60,12 @@ class MutationEngine:
         self.target_success_rate = target_success_rate
         self.state_manager = state_manager
         self.history_window = history_window
+        self.invariant_reporter = invariant_reporter
+        self.warmup_cycles = warmup_cycles
+        self.max_step = max_step
+        self.suppression_dampen = suppression_dampen
+        self.cycles_seen = 0
+        self.suppression_seen = False
         
         # Performance history
         self.success_rates: List[float] = []
@@ -79,7 +91,8 @@ class MutationEngine:
     def evaluate_and_mutate(
         self,
         execution_results: List[ExecutionResult],
-        cycle_id: str
+        cycle_id: str,
+        suppression_active: bool = False,
     ) -> Dict[str, float]:
         """
         Evaluate system performance and adjust thresholds.
@@ -97,6 +110,9 @@ class MutationEngine:
         Returns:
             Dictionary of new threshold values
         """
+        self.cycles_seen += 1
+        if suppression_active:
+            self.suppression_seen = True
         if not execution_results:
             return self._get_current_thresholds()
         
@@ -116,37 +132,82 @@ class MutationEngine:
         old_suppression = self.suppression_threshold
         old_drift = self.drift_delta
         
+        trust_delta = 0.0
+        suppression_delta = 0.0
+        drift_delta = 0.0
+
         if delta < -0.05:  # Significantly below target
             # System performing poorly - INCREASE thresholds (more conservative)
-            self.trust_threshold = min(0.95, self.trust_threshold + self.mutation_rate)
-            self.suppression_threshold = min(0.95, self.suppression_threshold + self.mutation_rate)
-            self.drift_delta = min(0.2, self.drift_delta + 0.02)
+            trust_delta = self.mutation_rate * 0.2
+            suppression_delta = 0.0
+            drift_delta = 0.01
             action = "TIGHTENING (poor performance)"
-            
         elif delta > 0.05:  # Significantly above target
             # System performing well - DECREASE thresholds (more aggressive)
-            self.trust_threshold = max(0.55, self.trust_threshold - self.mutation_rate)
-            self.suppression_threshold = max(0.78, self.suppression_threshold - self.mutation_rate)
-            self.drift_delta = max(0.05, self.drift_delta - 0.02)
+            trust_delta = -self.mutation_rate
+            suppression_delta = -self.mutation_rate
+            drift_delta = -0.02
             action = "LOOSENING (excellent performance)"
-
         else:
-            # Performance near target - minor adjustments
-            if delta < 0:
-                self.trust_threshold = min(0.95, self.trust_threshold + self.mutation_rate * 0.5)
-                action = "MINOR TIGHTENING"
-            else:
-                self.trust_threshold = max(0.55, self.trust_threshold - self.mutation_rate * 0.5)
-                action = "MINOR LOOSENING"
+            # Performance near target - hold thresholds stable.
+            action = "STABLE (near target)"
 
-        # Enforce minimum safety band: suppression >= trust + 0.05
-        required_suppression = self.trust_threshold + 0.05
-        if self.suppression_threshold < required_suppression:
-            if required_suppression <= 0.95:
-                self.suppression_threshold = required_suppression
-            else:
-                self.suppression_threshold = 0.95
-                self.trust_threshold = min(self.trust_threshold, self.suppression_threshold - 0.05)
+        # Rule A: during warmup, block all loosening moves.
+        warmup_blocked = False
+        if self.cycles_seen <= self.warmup_cycles and any(x < 0 for x in (trust_delta, suppression_delta, drift_delta)):
+            trust_delta = max(0.0, trust_delta)
+            suppression_delta = max(0.0, suppression_delta)
+            drift_delta = max(0.0, drift_delta)
+            warmup_blocked = True
+
+        # Rule C: if suppression is active, do not loosen.
+        suppression_blocked = False
+        if suppression_active and self.suppression_dampen:
+            if trust_delta < 0:
+                trust_delta = 0.0
+                suppression_blocked = True
+            if suppression_delta < 0:
+                suppression_delta = 0.0
+                suppression_blocked = True
+            if drift_delta < 0:
+                drift_delta = 0.0
+                suppression_blocked = True
+            # Keep routing recoverable under active suppression:
+            # do not continue tightening trust/suppression gates while suppressed.
+            if trust_delta > 0:
+                trust_delta = 0.0
+                suppression_blocked = True
+            if suppression_delta > 0:
+                suppression_delta = 0.0
+                suppression_blocked = True
+
+        # Rule B: cap all per-cycle movements.
+        trust_delta = max(-self.max_step, min(self.max_step, trust_delta))
+        suppression_delta = max(-self.max_step, min(self.max_step, suppression_delta))
+        drift_delta = max(-self.max_step, min(self.max_step, drift_delta))
+
+        new_trust = self.trust_threshold + trust_delta
+        new_suppression = self.suppression_threshold + suppression_delta
+        new_drift = self.drift_delta + drift_delta
+
+        # Rule D: enforce bounds and safety band.
+        new_trust = max(0.50, min(0.95, new_trust))
+        if self.suppression_dampen and self.suppression_seen:
+            # Keep trust gate recoverable after suppression has started.
+            new_trust = min(new_trust, 0.71)
+        # Ensure suppression ceiling can still satisfy suppression >= trust + 0.05.
+        new_trust = min(new_trust, 0.90)
+        new_suppression = max(max(0.60, new_trust + 0.05), min(0.95, new_suppression))
+        new_drift = max(0.05, min(0.20, new_drift))
+
+        self.trust_threshold = new_trust
+        self.suppression_threshold = new_suppression
+        self.drift_delta = new_drift
+
+        if warmup_blocked and abs(self.trust_threshold - old_trust) < 1e-12:
+            action = "STABLE (warmup)"
+        elif suppression_blocked and abs(self.trust_threshold - old_trust) < 1e-12:
+            action = "STABLE (suppression dampened)"
         
         # Record mutation
         mutation_record = {
@@ -171,7 +232,27 @@ class MutationEngine:
                 print(f"   • Drift delta: {old_drift:.2f} → {self.drift_delta:.2f}")
         else:
             print(f"   ✓ Thresholds stable (performance on target)")
-        
+
+        violations = []
+        violations.extend(Invariants.check_tau_range(self.trust_threshold))
+        violations.extend(Invariants.check_delta_bound(self.trust_threshold - old_trust))
+
+        if violations:
+            base_metadata = {
+                "run_id": cycle_id.split(":")[0] if ":" in cycle_id else cycle_id,
+                "cycle_id": cycle_id,
+                "timestamp": mutation_record.get("timestamp", ""),
+                "component": "mutation_engine",
+            }
+            if self.invariant_reporter is not None:
+                try:
+                    self.invariant_reporter(violations, base_metadata)
+                except Exception:
+                    pass
+            else:
+                # TODO(phase-2): centralize reporter wiring; this fallback remains non-blocking.
+                emit_violations(None, violations, base_metadata)
+
         return self._get_current_thresholds()
     
     def _get_current_thresholds(self) -> Dict[str, float]:

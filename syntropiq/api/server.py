@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from syntropiq.api.telemetry import GovernanceTelemetryHub
 from syntropiq.core.config import SyntropiqConfig
 from syntropiq.core.context import generate_request_id, set_request_id
+from syntropiq.core.invariants import Invariants, emit_violations, mode_from_env
 from syntropiq.core.logging import configure_logging
 from syntropiq.core.models import Task
 from syntropiq.execution.deterministic_executor import DeterministicExecutor
@@ -521,6 +522,27 @@ async def lifespan(app: FastAPI):
         max_cycles=int(os.getenv("GOVERNANCE_CYCLE_BUFFER_MAX", "500")),
     )
 
+    def _report_invariant_violations(violations, base_metadata):
+        if mode_from_env() == "off":
+            return
+        emit_violations(telemetry_hub, violations, base_metadata=base_metadata)
+
+    startup_invariant_violations = Invariants.check_gamma_eta(
+        gamma=config.governance.asymmetric_penalty,
+        eta=config.governance.asymmetric_reward,
+    )
+    if startup_invariant_violations:
+        emit_violations(
+            telemetry_hub,
+            startup_invariant_violations,
+            base_metadata={
+                "run_id": "STARTUP",
+                "cycle_id": "STARTUP:invariants",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "component": "startup",
+            },
+        )
+
     if os.getenv("SYNTROPIQ_DEMO_MODE", "true").lower() == "true":
         existing = agent_registry.list_agents()
         if not existing:
@@ -541,6 +563,7 @@ async def lifespan(app: FastAPI):
         initial_suppression_threshold=config.governance.suppression_threshold,
         initial_drift_delta=config.governance.drift_detection_delta,
         state_manager=state_manager,
+        invariant_reporter=_report_invariant_violations,
     )
 
     governance_loop.trust_engine.trust_threshold = mutation_engine.trust_threshold
