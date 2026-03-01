@@ -44,8 +44,8 @@ def test_event_chain_links_and_verifies(monkeypatch, tmp_path):
 
     with sqlite3.connect(db_path) as conn:
         rows = conn.execute(
-            "SELECT prev_hash, hash FROM events WHERE chain_id=? ORDER BY timestamp ASC, rowid ASC",
-            ("RUN_A",),
+            "SELECT prev_hash, hash FROM events WHERE chain_id=? ORDER BY id ASC",
+            ("telemetry:RUN_A",),
         ).fetchall()
 
     assert len(rows) == 2
@@ -67,8 +67,8 @@ def test_event_chain_detects_tamper(monkeypatch, tmp_path):
 
     with sqlite3.connect(db_path) as conn:
         conn.execute(
-            "UPDATE events SET payload=? WHERE id=(SELECT id FROM events WHERE chain_id=? ORDER BY timestamp ASC, rowid ASC LIMIT 1)",
-            ('{"tampered":true}', "RUN_T"),
+            "UPDATE events SET payload=? WHERE id=(SELECT id FROM events WHERE chain_id=? ORDER BY id ASC LIMIT 1)",
+            ('{"tampered":true}', "telemetry:RUN_T"),
         )
         conn.commit()
 
@@ -89,8 +89,8 @@ def test_separate_event_chains_do_not_cross_link(monkeypatch, tmp_path):
 
     with sqlite3.connect(db_path) as conn:
         run_b = conn.execute(
-            "SELECT prev_hash FROM events WHERE chain_id=? ORDER BY timestamp ASC, rowid ASC LIMIT 1",
-            ("RUN_B",),
+            "SELECT prev_hash FROM events WHERE chain_id=? ORDER BY id ASC LIMIT 1",
+            ("telemetry:RUN_B",),
         ).fetchone()
 
     assert run_b is not None
@@ -107,8 +107,8 @@ def test_cycle_chain_links_and_verifies(monkeypatch, tmp_path):
 
     with sqlite3.connect(db_path) as conn:
         rows = conn.execute(
-            "SELECT prev_hash, hash FROM cycles WHERE chain_id=? ORDER BY timestamp ASC, rowid ASC",
-            ("RUN_C",),
+            "SELECT prev_hash, hash FROM cycles WHERE chain_id=? ORDER BY id ASC",
+            ("telemetry:RUN_C",),
         ).fetchall()
 
     assert len(rows) == 2

@@ -293,27 +293,49 @@ class PersistentStateManager:
             return None
         return row[0]
 
+    def _telemetry_chain_id(self, run_id: Any) -> str:
+        if run_id is None:
+            return "telemetry:GLOBAL"
+        run_text = str(run_id).strip()
+        if not run_text:
+            return "telemetry:GLOBAL"
+        run_root = run_text.split(":", 1)[0]
+        return f"telemetry:{run_root}"
+
+    def _next_chain_sequence(self, conn: sqlite3.Connection, table: str, chain_id: str) -> int:
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE chain_id = ?", (chain_id,))
+        row = cursor.fetchone()
+        current = int(row[0]) if row and row[0] is not None else 0
+        return current + 1
+
     def save_event(self, event: Dict[str, Any]):
-        # Use existing id if present
         event_id = event.get("id")
 
-        # Generate deterministic id if missing
-        if not event_id:
-            cycle_id = event.get("cycle_id") or "no_cycle"
-            event_type = event.get("type") or "unknown"
-            agent_id = event.get("agent_id") or "none"
-            timestamp = event.get("timestamp") or "no_ts"
-            event_id = f"{cycle_id}:{event_type}:{agent_id}:{timestamp}"
-
         mode = self._audit_chain_mode()
-        chain_id = derive_chain_id(event, default="GLOBAL")
+        chain_id = self._telemetry_chain_id(event.get("run_id"))
         prev_hash: Optional[str] = None
         current_hash: Optional[str] = None
         hash_algo: Optional[str] = None
 
         with sqlite3.connect(self.db_path) as conn:
+            if not event_id:
+                seq = self._next_chain_sequence(conn, "events", chain_id)
+                event_id = f"{chain_id}:{seq:012d}"
             if mode == "log":
-                prev_hash = self._last_hash_for_chain(conn, "events", chain_id)
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT hash
+                    FROM events
+                    WHERE chain_id = ?
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    (chain_id,),
+                )
+                row = cursor.fetchone()
+                prev_hash = row[0] if row else None
                 hash_algo = "sha256"
                 current_hash = compute_hash(prev_hash, event, algo=hash_algo)
 
@@ -337,16 +359,31 @@ class PersistentStateManager:
             conn.commit()
 
     def save_cycle(self, cycle: Dict[str, Any]):
-        cycle_id = cycle.get("cycle_id") or cycle.get("id")
+        cycle_record_id = cycle.get("id")
         mode = self._audit_chain_mode()
-        chain_id = derive_chain_id(cycle, default="GLOBAL")
+        chain_id = self._telemetry_chain_id(cycle.get("run_id"))
         prev_hash: Optional[str] = None
         current_hash: Optional[str] = None
         hash_algo: Optional[str] = None
 
         with sqlite3.connect(self.db_path) as conn:
+            if not cycle_record_id:
+                seq = self._next_chain_sequence(conn, "cycles", chain_id)
+                cycle_record_id = f"{chain_id}:{seq:012d}"
             if mode == "log":
-                prev_hash = self._last_hash_for_chain(conn, "cycles", chain_id)
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT hash
+                    FROM cycles
+                    WHERE chain_id = ?
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    (chain_id,),
+                )
+                row = cursor.fetchone()
+                prev_hash = row[0] if row else None
                 hash_algo = "sha256"
                 current_hash = compute_hash(prev_hash, cycle, algo=hash_algo)
 
@@ -357,7 +394,7 @@ class PersistentStateManager:
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    cycle_id,
+                    cycle_record_id,
                     cycle.get("timestamp"),
                     json.dumps(cycle),
                     chain_id,
@@ -389,33 +426,35 @@ class PersistentStateManager:
             return [json.loads(row[0]) for row in reversed(rows)]
 
     def load_events_by_run_id(self, run_id: str, limit: int = 5000) -> List[Dict[str, Any]]:
+        telemetry_chain = self._telemetry_chain_id(run_id)
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
                 SELECT payload
                 FROM events
-                WHERE chain_id=?
+                WHERE chain_id=? OR chain_id=?
                 ORDER BY timestamp ASC, rowid ASC
                 LIMIT ?
                 """,
-                (run_id, limit),
+                (telemetry_chain, run_id, limit),
             )
             rows = cursor.fetchall()
             return [json.loads(row[0]) for row in rows]
 
     def load_cycles_by_run_id(self, run_id: str, limit: int = 2000) -> List[Dict[str, Any]]:
+        telemetry_chain = self._telemetry_chain_id(run_id)
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
                 SELECT payload
                 FROM cycles
-                WHERE chain_id=?
+                WHERE chain_id=? OR chain_id=?
                 ORDER BY timestamp ASC, rowid ASC
                 LIMIT ?
                 """,
-                (run_id, limit),
+                (telemetry_chain, run_id, limit),
             )
             rows = cursor.fetchall()
             return [json.loads(row[0]) for row in rows]
@@ -924,6 +963,12 @@ class PersistentStateManager:
         return {"ok": ok, "checked": len(row_dicts), "first_bad_index": first_bad_index, "reason": reason}
 
     def verify_events_chain(self, chain_id: str, limit: int = 500) -> Dict[str, Any]:
+        requested_chain = str(chain_id)
+        candidate_chain = (
+            requested_chain
+            if requested_chain.startswith("telemetry:")
+            else f"telemetry:{requested_chain.split(':', 1)[0]}"
+        )
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -931,12 +976,24 @@ class PersistentStateManager:
                 SELECT payload, prev_hash, hash, hash_algo
                 FROM events
                 WHERE chain_id=?
-                ORDER BY timestamp ASC, rowid ASC
+                ORDER BY id ASC
                 LIMIT ?
                 """,
-                (chain_id, limit),
+                (requested_chain, limit),
             )
             rows = cursor.fetchall()
+            if not rows and candidate_chain != requested_chain:
+                cursor.execute(
+                    """
+                    SELECT payload, prev_hash, hash, hash_algo
+                    FROM events
+                    WHERE chain_id=?
+                    ORDER BY id ASC
+                    LIMIT ?
+                    """,
+                    (candidate_chain, limit),
+                )
+                rows = cursor.fetchall()
 
         row_dicts = [
             {
@@ -956,6 +1013,12 @@ class PersistentStateManager:
         }
 
     def verify_cycles_chain(self, chain_id: str, limit: int = 200) -> Dict[str, Any]:
+        requested_chain = str(chain_id)
+        candidate_chain = (
+            requested_chain
+            if requested_chain.startswith("telemetry:")
+            else f"telemetry:{requested_chain.split(':', 1)[0]}"
+        )
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -963,12 +1026,24 @@ class PersistentStateManager:
                 SELECT payload, prev_hash, hash, hash_algo
                 FROM cycles
                 WHERE chain_id=?
-                ORDER BY timestamp ASC, rowid ASC
+                ORDER BY id ASC
                 LIMIT ?
                 """,
-                (chain_id, limit),
+                (requested_chain, limit),
             )
             rows = cursor.fetchall()
+            if not rows and candidate_chain != requested_chain:
+                cursor.execute(
+                    """
+                    SELECT payload, prev_hash, hash, hash_algo
+                    FROM cycles
+                    WHERE chain_id=?
+                    ORDER BY id ASC
+                    LIMIT ?
+                    """,
+                    (candidate_chain, limit),
+                )
+                rows = cursor.fetchall()
 
         row_dicts = [
             {

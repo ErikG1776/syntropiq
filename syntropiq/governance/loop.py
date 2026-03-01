@@ -11,11 +11,18 @@ Orchestrates the complete governance cycle:
 7. State persistence
 """
 
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from syntropiq.core.context import get_request_id
 from syntropiq.core.exceptions import CircuitBreakerTriggered, NoAgentsAvailable
 from syntropiq.core.models import Agent, ExecutionResult, Task
+from syntropiq.governance.healing_reflex import (
+    compute_fs_slope,
+    rehabilitate_trust,
+    should_rehabilitate,
+)
 from syntropiq.governance.learning_engine import update_trust_scores
 from syntropiq.governance.mutation_engine import MutationEngine
 from syntropiq.governance.prioritizer import OptimusPrioritizer
@@ -59,6 +66,7 @@ class GovernanceLoop:
         )
         self.telemetry = telemetry
         self._cycle_sequence = 0
+        self._healing_state: Dict[str, Dict[str, Any]] = {}
 
     def execute_cycle(
         self,
@@ -290,6 +298,16 @@ class GovernanceLoop:
                                 "metadata": {"source": "governance_loop_integrate"},
                             }
                         )
+
+                    self._maybe_apply_healing(
+                        run_id=run_id,
+                        cycle_id=cycle_id,
+                        timestamp=timestamp,
+                        agents=agents,
+                        trust_after=trust_after,
+                        reflect_decision=reflect_decision.to_dict(),
+                        telemetry_state=telemetry_state,
+                    )
             except Exception:
                 # Reflect integration is advisory; failures must not impact cycle execution.
                 pass
@@ -428,3 +446,151 @@ class GovernanceLoop:
 
     def get_system_statistics(self) -> Dict:
         return self.state.get_statistics()
+
+    def _healing_run_key(self, run_id: str) -> str:
+        if ":" in run_id:
+            prefix, suffix = run_id.rsplit(":", 1)
+            if suffix.isdigit():
+                return prefix
+        return run_id
+
+    def _maybe_apply_healing(
+        self,
+        *,
+        run_id: str,
+        cycle_id: str,
+        timestamp: str,
+        agents: Dict[str, Agent],
+        trust_after: Dict[str, float],
+        reflect_decision: Dict[str, Any],
+        telemetry_state: Any,
+    ) -> None:
+        run_key = self._healing_run_key(run_id)
+        state = self._healing_state.setdefault(
+            run_key,
+            {"crisis_cycles": 0, "fs_history": [], "stable_cycles": 0},
+        )
+
+        fs_value = float(reflect_decision.get("Fs", 0.0))
+        classification = str(reflect_decision.get("classification", "unknown")).lower()
+        in_crisis = classification == "crisis"
+        if in_crisis:
+            state["crisis_cycles"] = int(state["crisis_cycles"]) + 1
+            state["stable_cycles"] = 0
+        else:
+            state["crisis_cycles"] = 0
+            state["stable_cycles"] = int(state["stable_cycles"]) + 1
+        history = list(state["fs_history"])
+        history.append(fs_value)
+        state["fs_history"] = history[-50:]
+
+        if (os.getenv("HEALING_MODE") or "off").strip().lower() != "integrate":
+            return
+
+        suppressed = dict(getattr(self.trust_engine, "suppressed_agents", {}))
+        if not suppressed:
+            return
+
+        candidate_pairs = []
+        for agent_id in sorted(suppressed.keys()):
+            if agent_id not in agents:
+                continue
+            candidate_pairs.append((float(agents[agent_id].trust_score), agent_id))
+        if not candidate_pairs:
+            return
+        candidate_pairs.sort(key=lambda item: (-item[0], item[1]))
+        _, candidate_id = candidate_pairs[0]
+        candidate = agents[candidate_id]
+
+        posterior_rows = (
+            telemetry_state.load_bayes_posteriors(run_key, limit=1)
+            if telemetry_state is not None and hasattr(telemetry_state, "load_bayes_posteriors")
+            else []
+        )
+        posterior_mean = (
+            float(posterior_rows[0].get("posterior_mean", posterior_rows[0].get("mean", 0.0)))
+            if posterior_rows
+            else 0.0
+        )
+        posterior_uncert = (
+            float(posterior_rows[0].get("posterior_uncertainty", posterior_rows[0].get("uncertainty", 1.0)))
+            if posterior_rows
+            else 1.0
+        )
+
+        fs_slope_window = int(os.getenv("HEALING_FS_SLOPE_WINDOW", "3"))
+        fs_slope_min = float(os.getenv("HEALING_FS_SLOPE_MIN", "0.01"))
+        posterior_mean_min = float(os.getenv("HEALING_POSTERIOR_MEAN_MIN", "0.80"))
+        posterior_uncert_max = float(os.getenv("HEALING_POSTERIOR_UNCERT_MAX", "0.10"))
+        fs_slope = compute_fs_slope(state["fs_history"], fs_slope_window)
+
+        eligible = should_rehabilitate(
+            crisis_cycles=int(state["crisis_cycles"]),
+            fs_history=state["fs_history"],
+            fs_slope_window=fs_slope_window,
+            fs_slope_min=fs_slope_min,
+            posterior_mean=posterior_mean,
+            posterior_uncert=posterior_uncert,
+            posterior_mean_min=posterior_mean_min,
+            posterior_uncert_max=posterior_uncert_max,
+        )
+        if not eligible:
+            return
+
+        mutation_step = float(getattr(self.mutation_engine, "max_step", 0.02))
+        configured_step = float(os.getenv("HEALING_TRUST_STEP", "0.02"))
+        trust_step = min(configured_step, mutation_step)
+        trust_cap = float(os.getenv("HEALING_TRUST_CAP", "0.70"))
+
+        old_trust = float(candidate.trust_score)
+        new_trust = rehabilitate_trust(old_trust, trust_step, trust_cap)
+        if abs(new_trust - old_trust) <= 1e-12:
+            return
+
+        candidate.trust_score = new_trust
+        self.state.update_trust_scores({candidate_id: new_trust}, reason=f"{run_id}:healing_reflex")
+
+        restored = False
+        if new_trust >= float(self.trust_engine.trust_threshold):
+            self.trust_engine.suppressed_agents.pop(candidate_id, None)
+            if hasattr(self.trust_engine, "probation_agents"):
+                self.trust_engine.probation_agents.pop(candidate_id, None)
+            candidate.status = "active"
+            self.state.update_agent_status(candidate_id, "active")
+            self.state.update_suppression_state(candidate_id, is_suppressed=False, redemption_cycle=0)
+            restored = True
+        else:
+            candidate.status = "suppressed"
+            self.state.update_agent_status(candidate_id, "suppressed")
+            self.state.update_suppression_state(
+                candidate_id,
+                is_suppressed=True,
+                redemption_cycle=int(self.trust_engine.suppressed_agents.get(candidate_id, 1)),
+            )
+
+        if self.telemetry is not None and hasattr(self.telemetry, "publish_event"):
+            event_type = "restoration" if restored else "status_change"
+            self.telemetry.publish_event(
+                {
+                    "run_id": run_id,
+                    "cycle_id": cycle_id,
+                    "timestamp": timestamp,
+                    "type": event_type,
+                    "agent_id": candidate_id,
+                    "trust_before": round(old_trust, 6),
+                    "trust_after": round(new_trust, 6),
+                    "authority_before": 0.0,
+                    "authority_after": 0.0,
+                    "metadata": {
+                        "healing_reflex": True,
+                        "restored": restored,
+                        "fs_slope": round(fs_slope, 6),
+                        "posterior_mean": round(posterior_mean, 6),
+                        "posterior_uncertainty": round(posterior_uncert, 6),
+                        "old_trust": round(old_trust, 6),
+                        "new_trust": round(new_trust, 6),
+                        "crisis_cycles": int(state["crisis_cycles"]),
+                        "request_id": get_request_id(),
+                    },
+                }
+            )

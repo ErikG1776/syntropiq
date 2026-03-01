@@ -389,3 +389,74 @@ Endpoints:
 - `POST /api/v1/reflect/consensus`
 - `GET /api/v1/reflect/consensus/decisions?run_id=...`
 - `GET /api/v1/reflect/consensus/verify?run_id=...`
+
+## Governance-Driven Healing Reflex
+
+Feature flag:
+
+- `HEALING_MODE=off|integrate` (default `off`)
+
+Deterministic gating controls:
+
+- `HEALING_CRISIS_MIN_CYCLES=5`
+- `HEALING_FS_SLOPE_MIN=0.01`
+- `HEALING_FS_SLOPE_WINDOW=3`
+- `HEALING_POSTERIOR_MEAN_MIN=0.80`
+- `HEALING_POSTERIOR_UNCERT_MAX=0.10`
+- `HEALING_TRUST_STEP=0.02`
+- `HEALING_TRUST_CAP=0.70`
+
+When enabled, the loop can rehabilitate one suppressed agent per eligible cycle using
+Reflect trend + Bayes confidence gates. Rehabilitation is bounded, deterministic, and
+emits telemetry events for audit.
+
+## Investor Demo Runner
+
+Run a deterministic investor-facing end-to-end scenario (default 30 cycles, 5-minute windows) using the real governance stack and persistent ledgers:
+
+```bash
+python -m syntropiq.tools.investor_demo_runner --run-id INVESTOR_DEMO_001
+```
+
+Useful options:
+
+- `--cycles` (default `30`)
+- `--window-minutes` (default `5`)
+- `--batch-size` (default `12`)
+- `--seed` (default `20260228`)
+- `--drift-start` / `--drift-end` (defaults `6` / `12`)
+- `--drift-agent` (default `beta`)
+- `--output-json` (default `investor_demo_output.json`)
+
+The runner:
+
+- enables integration modes in-process
+- executes real governance cycles with deterministic simulated inputs
+- persists telemetry and ledgers to `syntropiq_telemetry.db`
+- computes replay `r` score
+- verifies telemetry + optimize + lambda + bayes + reflect + consensus chains
+- writes a JSON artifact with per-cycle narrative and final certification block.
+
+## Internal Validation Harness
+
+Run deterministic multi-scenario internal validation (no UI):
+
+```bash
+python3 -m syntropiq.tools.internal_validation_runner --run-prefix VALID --seeds 5 --cycles 30
+```
+
+What it runs:
+
+- `mild_drift`
+- `severe_adversarial`
+- `noisy_stability`
+
+Per scenario, it executes N seeded runs through the real governance stack (Govern + Optimize + Bayes + Reflect + Consensus + Healing), writes artifacts under `validation_artifacts/<scenario>/`, and evaluates:
+
+- certification flag
+- replay `r >= 0.99`
+- chain verification across ledgers
+- no suppression deadlock
+- recovery/stability expectations by scenario
+
+Expected runtime: a few minutes depending on seed count and cycle count.
