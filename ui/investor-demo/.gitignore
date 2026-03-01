@@ -1,0 +1,4 @@
+# investor demo build artifacts
+node_modules/
+.next/
+out/
