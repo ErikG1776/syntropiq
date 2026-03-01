@@ -35,17 +35,21 @@ def _set_integration_env() -> None:
     os.environ["REFLECT_CONSENSUS_MODE"] = "integrate"
 
 
+# ✅ FIXED TELEMETRY CHAIN VERIFICATION
 def _verify_chain_table(db_path: str, table: str, run_id: str) -> bool:
+    chain_id = f"telemetry:{run_id}"
+
     with sqlite3.connect(db_path) as conn:
         rows = conn.execute(
             f"""
             SELECT payload, prev_hash, hash, hash_algo
             FROM {table}
             WHERE chain_id=?
-            ORDER BY timestamp ASC, rowid ASC
+            ORDER BY id ASC
             """,
-            (run_id,),
+            (chain_id,),
         ).fetchall()
+
     row_dicts = [
         {
             "payload": row[0],
@@ -55,38 +59,35 @@ def _verify_chain_table(db_path: str, table: str, run_id: str) -> bool:
         }
         for row in rows
     ]
+
+    if not row_dicts:
+        return False
+
     ok, _, _ = verify_chain(row_dicts)
-    return bool(ok and len(row_dicts) > 0)
+    return bool(ok)
 
 
 def run_full_system_demo():
-    """
-    Runs 30 governance cycles with full integration enabled,
-    then verifies:
-        - replay r score
-        - audit chain integrity
-        - optimization ledger
-        - lambda history
-        - bayes posterior ledger
-        - insight ledger
-        - consensus ledger
-    Prints structured certification block.
-    Returns True if all checks pass.
-    """
     _set_integration_env()
 
     run_id = "FULL_SYSTEM_DEMO"
     telemetry_db_path = "full_system_demo.db"
     runtime_db_path = "full_system_demo_runtime.db"
+
     for path in (telemetry_db_path, runtime_db_path):
         if os.path.exists(path):
             os.remove(path)
 
     telemetry_state = TelemetryStateManager(db_path=telemetry_db_path)
-    telemetry_hub = GovernanceTelemetryHub(state_manager=telemetry_state, max_events=5000, max_cycles=1000)
+    telemetry_hub = GovernanceTelemetryHub(
+        state_manager=telemetry_state,
+        max_events=5000,
+        max_cycles=1000,
+    )
 
     runtime_state = RuntimeStateManager(db_path=runtime_db_path)
     registry = AgentRegistry(runtime_state)
+
     loop = GovernanceLoop(
         state_manager=runtime_state,
         trust_threshold=0.70,
@@ -95,7 +96,11 @@ def run_full_system_demo():
         routing_mode="deterministic",
         telemetry=telemetry_hub,
     )
-    executor = DeterministicExecutor(decision_threshold=-0.05, fixed_latency=0.001)
+
+    executor = DeterministicExecutor(
+        decision_threshold=-0.05,
+        fixed_latency=0.001,
+    )
 
     registry.register_agent("alpha", ["general"], initial_trust_score=0.90, status="active")
     registry.register_agent("beta", ["general"], initial_trust_score=0.85, status="active")
@@ -107,14 +112,20 @@ def run_full_system_demo():
 
     for i in range(30):
         tasks = [
-            Task(id=f"demo-{i}-a", impact=0.80, urgency=0.70, risk=0.20, metadata={"cycle": i}),
-            Task(id=f"demo-{i}-b", impact=0.75, urgency=0.65, risk=0.25, metadata={"cycle": i}),
-            Task(id=f"demo-{i}-c", impact=0.70, urgency=0.60, risk=0.30, metadata={"cycle": i}),
+            Task(id=f"demo-{i}-a", impact=0.80, urgency=0.70, risk=0.20),
+            Task(id=f"demo-{i}-b", impact=0.75, urgency=0.65, risk=0.25),
+            Task(id=f"demo-{i}-c", impact=0.70, urgency=0.60, risk=0.30),
         ]
+
         agents = registry.get_agents_dict()
 
         try:
-            result = loop.execute_cycle(tasks=tasks, agents=agents, executor=executor, run_id=run_id)
+            result = loop.execute_cycle(
+                tasks=tasks,
+                agents=agents,
+                executor=executor,
+                run_id=run_id,
+            )
             cycle_mutations[str(result.get("cycle_id"))] = dict(result.get("mutation", {}))
             cycles_executed += 1
         except Exception:
@@ -125,19 +136,22 @@ def run_full_system_demo():
             deadlock_detected = True
             break
 
-        # Persist adaptive lambda + posterior history each cycle for ledger coverage.
+        # Persist adaptive ledgers
         recent_cycles = telemetry_state.load_cycles_by_run_id(run_id, limit=100)
+
         posterior = posterior_from_cycles(recent_cycles[-50:])
         telemetry_state.save_bayes_posterior({"run_id": run_id, **posterior})
 
         trust_values = [float(a.trust_score) for a in agents.values()]
         avg_trust = sum(trust_values) / len(trust_values) if trust_values else 0.0
+
         success_total = sum(int(c.get("successes", 0)) for c in recent_cycles[-10:])
         failure_total = sum(int(c.get("failures", 0)) for c in recent_cycles[-10:])
         denom = success_total + failure_total
         failure_rate = (failure_total / denom) if denom > 0 else 0.0
 
         current_lambda = get_current_lambda(run_id)
+
         recommended, deltas = compute_adaptive_lambda(
             base=current_lambda,
             signals={
@@ -151,6 +165,7 @@ def run_full_system_demo():
             },
             bounds={"max_step": 0.02, "max_trust": 0.3},
         )
+
         telemetry_state.save_lambda_history(
             {
                 "run_id": run_id,
@@ -161,35 +176,10 @@ def run_full_system_demo():
                 "posterior": posterior,
             }
         )
+
         set_current_lambda(recommended, run_id=run_id)
 
     artifacts = load_run_artifacts(telemetry_state, run_id)
-    # Enrich artifact cycles with mutation and selection shape expected by replay metrics.
-    events_by_cycle = {}
-    for event in artifacts.get("events", []):
-        cid = str(event.get("cycle_id", ""))
-        events_by_cycle.setdefault(cid, []).append(event)
-    for cycle in artifacts.get("cycles", []):
-        cid = str(cycle.get("cycle_id", ""))
-        events = events_by_cycle.get(cid, [])
-        if not cycle.get("selected_agents"):
-            trust_updates = [e for e in events if e.get("type") == "trust_update" and isinstance(e.get("agent_id"), str)]
-            cycle["selected_agents"] = [trust_updates[0]["agent_id"]] if trust_updates else []
-        if cid in cycle_mutations:
-            cycle["mutation"] = {
-                "trust_threshold": cycle_mutations[cid].get("trust_threshold"),
-                "suppression_threshold": cycle_mutations[cid].get("suppression_threshold"),
-                "drift_delta": cycle_mutations[cid].get("drift_delta"),
-            }
-        elif not cycle.get("mutation"):
-            mutation_events = [e for e in events if e.get("type") == "mutation"]
-            if mutation_events:
-                meta = mutation_events[-1].get("metadata") or {}
-                cycle["mutation"] = {
-                    "trust_threshold": meta.get("trust_threshold_after"),
-                    "suppression_threshold": meta.get("suppression_threshold_after"),
-                    "drift_delta": meta.get("drift_delta_after"),
-                }
 
     replayed = replay_run(artifacts, seed=123, mode="light")
     comparison = compare_runs(artifacts, replayed)
@@ -199,6 +189,7 @@ def run_full_system_demo():
         _verify_chain_table(telemetry_db_path, "events", run_id)
         and _verify_chain_table(telemetry_db_path, "cycles", run_id)
     )
+
     optimization_ok = bool(telemetry_state.verify_optimization_chain(run_id).get("ok"))
     lambda_ok = bool(telemetry_state.verify_lambda_chain(run_id).get("ok"))
     bayes_ok = bool(telemetry_state.verify_bayes_chain(run_id).get("ok"))
@@ -226,6 +217,7 @@ def run_full_system_demo():
 
     all_chains_ok = telemetry_ok and optimization_ok and lambda_ok and bayes_ok and insight_ok and consensus_ok
     success = (r_score >= 0.99) and all_chains_ok and (not deadlock_detected)
+
     print(f"certified: {success}")
     return success
 

@@ -31,13 +31,21 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _first_present(metadata: Dict[str, Any], keys: List[str]) -> Any:
+    """Return the first metadata[key] that exists and is not None."""
+    for k in keys:
+        if k in metadata and metadata.get(k) is not None:
+            return metadata.get(k)
+    return None
+
+
 def _normalize_cycle(cycle: Dict[str, Any], run_events: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
     cycle_id = str(cycle.get("cycle_id", ""))
 
     selected_agents: List[str] = []
     suppressed_agents: List[str] = []
     trust_after: Dict[str, float] = {}
-    mutation = {
+    mutation: Dict[str, Optional[float]] = {
         "trust_threshold": None,
         "suppression_threshold": None,
         "drift_delta": None,
@@ -71,15 +79,44 @@ def _normalize_cycle(cycle: Dict[str, Any], run_events: Dict[str, List[Dict[str,
                     suppressed_agents.remove(aid)
 
         if event_type == "mutation":
-            mutation["trust_threshold"] = metadata.get("trust_threshold")
-            mutation["suppression_threshold"] = metadata.get("suppression_threshold")
-            mutation["drift_delta"] = metadata.get("drift_delta")
+            # Support both legacy keys (trust_threshold, etc) and the "before/after" style keys.
+            trust_val = _first_present(
+                metadata,
+                ["trust_threshold", "trust_threshold_after", "trust_threshold_current", "tau", "tau_after"],
+            )
+            suppress_val = _first_present(
+                metadata,
+                ["suppression_threshold", "suppression_threshold_after", "suppression_threshold_current", "tau_s", "tau_s_after"],
+            )
+            drift_val = _first_present(
+                metadata,
+                ["drift_delta", "drift_delta_after", "drift_delta_current"],
+            )
 
+            if trust_val is not None:
+                mutation["trust_threshold"] = _safe_float(trust_val, 0.0)
+            if suppress_val is not None:
+                mutation["suppression_threshold"] = _safe_float(suppress_val, 0.0)
+            if drift_val is not None:
+                mutation["drift_delta"] = _safe_float(drift_val, 0.0)
+
+    # Fallback: selected agents may be persisted on the cycle itself.
     if not selected_agents and isinstance(cycle.get("selected_agents"), list):
         selected_agents = [str(x) for x in cycle.get("selected_agents")]
 
+    # Fallback: trust updates may be stored on the cycle itself.
     if not trust_after and isinstance(cycle.get("trust_updates"), dict):
-        trust_after = {str(k): _safe_float(v, 0.0) for k, v in cycle.get("trust_updates", {}).items()}
+        trust_after = {
+            str(k): _safe_float(v, 0.0)
+            for k, v in (cycle.get("trust_updates") or {}).items()
+        }
+
+    # Fallback: mutation may be stored on the cycle itself.
+    if isinstance(cycle.get("mutation"), dict):
+        cyc_mut = cycle.get("mutation") or {}
+        for k in ("trust_threshold", "suppression_threshold", "drift_delta"):
+            if mutation.get(k) is None and cyc_mut.get(k) is not None:
+                mutation[k] = _safe_float(cyc_mut.get(k), 0.0)
 
     return {
         "run_id": cycle.get("run_id"),
@@ -88,9 +125,9 @@ def _normalize_cycle(cycle: Dict[str, Any], run_events: Dict[str, List[Dict[str,
         "suppressed_agents": sorted(set(suppressed_agents)),
         "trust_after": trust_after,
         "mutation": {
-            "trust_threshold": _safe_float(mutation["trust_threshold"], 0.0) if mutation["trust_threshold"] is not None else None,
-            "suppression_threshold": _safe_float(mutation["suppression_threshold"], 0.0) if mutation["suppression_threshold"] is not None else None,
-            "drift_delta": _safe_float(mutation["drift_delta"], 0.0) if mutation["drift_delta"] is not None else None,
+            "trust_threshold": mutation["trust_threshold"],
+            "suppression_threshold": mutation["suppression_threshold"],
+            "drift_delta": mutation["drift_delta"],
         },
     }
 
