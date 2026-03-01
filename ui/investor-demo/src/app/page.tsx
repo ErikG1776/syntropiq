@@ -7,147 +7,174 @@ import {
   HeartPulse,
   ArrowRight,
   Activity,
-  Lock,
+  Shield,
   Zap,
+  Eye,
 } from "lucide-react";
 
 const domains = [
   {
     icon: ShieldCheck,
     title: "Payment Fraud",
-    description: "Real-time transaction monitoring across 3 AI fraud detection models",
-    color: "text-rose-400",
-    border: "border-rose-500/20 hover:border-rose-500/40",
-    glow: "hover:shadow-[0_0_30px_rgba(244,63,94,0.1)]",
-    bg: "bg-rose-500/5",
+    subtitle: "Transaction Monitoring",
+    description:
+      "3 AI models score transactions in real time. When one drifts, governance suppresses it before losses compound.",
+    color: "text-red-400",
+    iconBg: "bg-red-500/10",
   },
   {
     icon: Landmark,
     title: "Loan Underwriting",
-    description: "Automated loan approval decisions across 3 underwriting AI agents",
-    color: "text-cyan-400",
-    border: "border-cyan-500/20 hover:border-cyan-500/40",
-    glow: "hover:shadow-[0_0_30px_rgba(34,211,238,0.1)]",
-    bg: "bg-cyan-500/5",
+    subtitle: "Credit Decisioning",
+    description:
+      "3 underwriting agents compete on approval quality. Drift detection catches loosening standards before defaults spike.",
+    color: "text-blue-400",
+    iconBg: "bg-blue-500/10",
   },
   {
     icon: HeartPulse,
     title: "Hospital Readmission",
-    description: "Discharge planning for diabetic patients across 3 clinical AI models",
+    subtitle: "Discharge Planning",
+    description:
+      "3 clinical models flag readmission risk. Governance catches model degradation before CMS penalties hit.",
     color: "text-emerald-400",
-    border: "border-emerald-500/20 hover:border-emerald-500/40",
-    glow: "hover:shadow-[0_0_30px_rgba(52,211,153,0.1)]",
-    bg: "bg-emerald-500/5",
+    iconBg: "bg-emerald-500/10",
   },
 ];
 
-const features = [
+const capabilities = [
   {
-    icon: Activity,
+    icon: Eye,
     title: "Drift Detection",
-    description: "Monitors agent trust trajectories and detects performance degradation in real-time",
+    description:
+      "Continuous trust scoring detects performance degradation within 2\u20133 governance cycles",
   },
   {
-    icon: Lock,
+    icon: Shield,
     title: "Autonomous Suppression",
-    description: "Automatically isolates underperforming agents while maintaining system throughput",
+    description:
+      "Underperforming agents are isolated automatically \u2014 no human intervention, no production downtime",
   },
   {
     icon: Zap,
     title: "Recursive Recovery",
-    description: "Self-healing governance that adapts thresholds and restores agents through probation",
+    description:
+      "Self-healing governance adapts thresholds, rehabilitates agents through probation, and restores full capacity",
   },
 ];
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 dot-grid opacity-40" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-cyan-500/[0.03] rounded-full blur-[120px]" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-rose-500/[0.02] rounded-full blur-[100px]" />
+    <div className="relative min-h-screen">
+      {/* Subtle background glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-blue-500/[0.04] rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[400px] bg-violet-500/[0.03] rounded-full blur-[100px]" />
+      </div>
 
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto px-6">
+        {/* Nav */}
+        <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">syntropiq</span>
+            <span className="text-lg font-semibold tracking-tight">
+              syntropiq
+            </span>
           </div>
-          <span className="text-xs font-mono text-text-muted bg-white/5 px-3 py-1.5 rounded-full border border-border">
+          <div className="text-[11px] font-mono text-text-muted bg-surface px-4 py-2 rounded-full border border-border tracking-wider">
             INVESTOR DEMO
-          </span>
+          </div>
         </header>
 
         {/* Hero */}
-        <main className="max-w-7xl mx-auto px-8 pt-20 pb-16">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 bg-cyan-400/10 px-4 py-2 rounded-full border border-cyan-400/20 mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-              Autonomous AI Governance Platform
-            </div>
-
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1]">
-              AI agents that{" "}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                govern themselves
-              </span>
-            </h1>
-
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
-              Watch multi-agent systems detect drift, suppress failing models,
-              adapt governance thresholds, and recover — all without human
-              intervention.
-            </p>
-
-            <Link
-              href="/demo"
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold px-8 py-4 rounded-xl text-base hover:from-cyan-400 hover:to-blue-400 transition-all duration-300 shadow-[0_0_30px_rgba(34,211,238,0.2)] hover:shadow-[0_0_50px_rgba(34,211,238,0.3)]"
-            >
-              Launch Live Demo
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+        <section className="pt-24 pb-20 text-center">
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-blue-400 bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/15 mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+            Autonomous AI Governance
           </div>
 
-          {/* Domain cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-20">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6 max-w-4xl mx-auto">
+            AI agents that{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-violet-400 bg-clip-text text-transparent">
+              govern themselves
+            </span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed mb-12">
+            Watch multi-agent systems detect drift, suppress failing models,
+            adapt thresholds, and self-heal &mdash; all without human intervention.
+          </p>
+
+          <Link
+            href="/demo"
+            className="group inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-4 rounded-xl text-base transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.25)] hover:shadow-[0_0_60px_rgba(59,130,246,0.35)]"
+          >
+            Launch Live Demo
+            <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </section>
+
+        {/* Domain Cards */}
+        <section className="pb-20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {domains.map((d) => (
               <div
                 key={d.title}
-                className={`glass-card p-6 transition-all duration-300 ${d.border} ${d.glow}`}
+                className="panel p-6 hover:border-border-bright transition-all duration-300"
               >
-                <div className={`w-10 h-10 rounded-xl ${d.bg} flex items-center justify-center mb-4`}>
+                <div
+                  className={`w-10 h-10 rounded-xl ${d.iconBg} flex items-center justify-center mb-5`}
+                >
                   <d.icon className={`w-5 h-5 ${d.color}`} />
                 </div>
-                <h3 className="text-base font-semibold mb-2">{d.title}</h3>
+                <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">
+                  {d.subtitle}
+                </p>
+                <h3 className="text-lg font-semibold mb-2">{d.title}</h3>
                 <p className="text-sm text-text-secondary leading-relaxed">
                   {d.description}
                 </p>
               </div>
             ))}
           </div>
+        </section>
 
-          {/* Feature strip */}
+        {/* Capabilities */}
+        <section className="pb-24">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold tracking-tight mb-3">
+              How it works
+            </h2>
+            <p className="text-sm text-text-secondary max-w-lg mx-auto">
+              Three layers of autonomous governance, running continuously
+              without human oversight.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {features.map((f) => (
-              <div key={f.title} className="text-center">
-                <div className="w-10 h-10 rounded-xl bg-white/5 border border-border flex items-center justify-center mx-auto mb-3">
-                  <f.icon className="w-5 h-5 text-text-secondary" />
+            {capabilities.map((c, i) => (
+              <div key={c.title} className="text-center">
+                <div className="w-12 h-12 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-4">
+                  <c.icon className="w-5 h-5 text-text-secondary" />
                 </div>
-                <h4 className="text-sm font-semibold mb-1">{f.title}</h4>
+                <div className="text-[11px] font-mono text-text-muted mb-2">
+                  0{i + 1}
+                </div>
+                <h4 className="text-sm font-semibold mb-2">{c.title}</h4>
                 <p className="text-xs text-text-muted leading-relaxed">
-                  {f.description}
+                  {c.description}
                 </p>
               </div>
             ))}
           </div>
-        </main>
+        </section>
 
         {/* Footer */}
-        <footer className="text-center py-8 text-xs text-text-muted border-t border-border">
-          Patent-pending autonomous governance technology
+        <footer className="py-8 border-t border-border flex items-center justify-between text-xs text-text-muted">
+          <span>Patent-pending autonomous governance technology</span>
+          <span className="font-mono">syntropiq.com</span>
         </footer>
       </div>
     </div>

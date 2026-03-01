@@ -13,11 +13,9 @@ interface AgentCardsProps {
 export function AgentCards({ currentCycle, domain }: AgentCardsProps) {
   if (!currentCycle) {
     return (
-      <div className="glass-card p-5">
-        <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider mb-4">
-          Agent Pool
-        </h3>
-        <div className="flex items-center justify-center h-32 text-text-muted text-sm">
+      <div className="panel p-5">
+        <h3 className="text-sm font-semibold mb-4">Agent Status</h3>
+        <div className="flex items-center justify-center h-28 text-text-muted text-sm">
           Waiting for demo to start...
         </div>
       </div>
@@ -25,90 +23,88 @@ export function AgentCards({ currentCycle, domain }: AgentCardsProps) {
   }
 
   return (
-    <div className="glass-card p-5">
-      <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider mb-4">
-        Agent Pool
-      </h3>
+    <div className="panel p-5">
+      <h3 className="text-sm font-semibold mb-4">Agent Status</h3>
       <div className="space-y-3">
         {domain.agentNames.map((agent) => {
           const status = getAgentStatus(agent, currentCycle);
           const trust = currentCycle.trust_scores[agent] ?? 0;
           const isDrift = agent === domain.driftAgent;
 
-          const statusConfig = {
+          const config = {
             active: {
               icon: ShieldCheck,
               label: "Active",
               color: "text-emerald-400",
-              bg: "bg-emerald-400/10",
               border: "border-emerald-500/20",
-              barColor: "bg-emerald-400",
+              barColor: "bg-emerald-500",
+              bg: "",
             },
             suppressed: {
               icon: ShieldOff,
               label: "Suppressed",
-              color: "text-rose-400",
-              bg: "bg-rose-400/10",
-              border: "border-rose-500/30",
-              barColor: "bg-rose-400",
+              color: "text-red-400",
+              border: "border-red-500/25",
+              barColor: "bg-red-500",
+              bg: "bg-red-500/[0.04]",
             },
             probation: {
               icon: ShieldAlert,
               label: "Probation",
               color: "text-amber-400",
-              bg: "bg-amber-400/10",
               border: "border-amber-500/20",
-              barColor: "bg-amber-400",
+              barColor: "bg-amber-500",
+              bg: "bg-amber-500/[0.04]",
             },
             drifting: {
               icon: AlertTriangle,
               label: "Drifting",
               color: "text-amber-400",
-              bg: "bg-amber-400/10",
               border: "border-amber-500/20",
-              barColor: "bg-amber-400",
+              barColor: "bg-amber-500",
+              bg: "bg-amber-500/[0.04]",
             },
           };
 
-          const config = statusConfig[status];
-          const StatusIcon = config.icon;
+          const cfg = config[status];
+          const StatusIcon = cfg.icon;
 
           return (
             <div
               key={agent}
               className={cn(
-                "p-3 rounded-xl border transition-all duration-500",
-                config.bg,
-                config.border,
+                "p-3.5 rounded-xl border transition-all duration-500",
+                cfg.border,
+                cfg.bg,
                 status === "suppressed" && "pulse-danger"
               )}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <StatusIcon className={cn("w-4 h-4", config.color)} />
+                  <StatusIcon className={cn("w-4 h-4", cfg.color)} />
                   <span className="text-sm font-medium">
                     {getAgentDisplayName(agent)}
                   </span>
                   {isDrift && (
-                    <span className="text-[10px] font-mono text-text-muted bg-white/5 px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] font-mono text-text-muted bg-white/5 px-1.5 py-0.5 rounded tracking-wider">
                       DRIFT TARGET
                     </span>
                   )}
                 </div>
-                <span className={cn("text-xs font-medium", config.color)}>
-                  {config.label}
+                <span className={cn("text-[11px] font-medium", cfg.color)}>
+                  {cfg.label}
                 </span>
               </div>
 
               {/* Trust bar */}
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-700",
-                      config.barColor
+                      cfg.barColor
                     )}
-                    style={{ width: `${trust * 100}%` }}
+                    style={{ width: `${Math.max(trust * 100, 0)}%` }}
                   />
                 </div>
                 <span className="text-xs font-mono text-text-secondary tabular-nums w-12 text-right">

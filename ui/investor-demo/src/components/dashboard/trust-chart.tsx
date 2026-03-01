@@ -9,48 +9,56 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  ReferenceArea,
 } from "recharts";
 import type { DomainConfig, CycleData } from "@/lib/demo-data";
+import { getAgentDisplayName } from "@/lib/demo-data";
 
 const AGENT_COLORS: Record<string, string> = {
-  // Fraud
-  rule_engine: "#22d3ee",
-  ml_scorer: "#818cf8",
-  ensemble: "#f43f5e",
-  // Lending
-  conservative: "#22d3ee",
-  balanced: "#818cf8",
-  growth: "#f43f5e",
-  // Readmission
-  predictive: "#818cf8",
-  rapid_screen: "#f43f5e",
+  rule_engine: "#3b82f6",
+  ml_scorer: "#8b5cf6",
+  ensemble: "#ef4444",
+  conservative: "#3b82f6",
+  balanced: "#8b5cf6",
+  growth: "#ef4444",
+  predictive: "#8b5cf6",
+  rapid_screen: "#ef4444",
 };
 
 function getAgentColor(agent: string): string {
-  return AGENT_COLORS[agent] || "#94a3b8";
+  return AGENT_COLORS[agent] || "#a1a1aa";
 }
 
 interface TrustChartProps {
   trustHistory: Array<{ cycle: number } & Record<string, number>>;
   domain: DomainConfig;
   currentCycle: CycleData | null;
-  suppressionRanges?: Array<{ start: number; end: number }>;
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: number }) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: number;
+}) {
   if (!active || !payload) return null;
   return (
-    <div className="glass-card p-3 text-xs">
-      <p className="text-text-muted mb-2 font-mono">Cycle {label}</p>
+    <div className="bg-surface-elevated border border-border-bright rounded-xl p-3 text-xs shadow-2xl">
+      <p className="text-text-muted mb-2 font-mono text-[10px]">
+        Cycle {label}
+      </p>
       {payload.map((p) => (
-        <div key={p.name} className="flex items-center gap-2 mb-1">
+        <div key={p.name} className="flex items-center gap-2 mb-1 last:mb-0">
           <span
-            className="w-2 h-2 rounded-full"
+            className="w-2 h-2 rounded-full shrink-0"
             style={{ backgroundColor: p.color }}
           />
-          <span className="text-text-secondary">{p.name}</span>
-          <span className="ml-auto font-mono font-medium tabular-nums">
+          <span className="text-text-secondary">
+            {getAgentDisplayName(p.name)}
+          </span>
+          <span className="ml-auto font-mono font-medium tabular-nums pl-3">
             {p.value?.toFixed(3)}
           </span>
         </div>
@@ -64,113 +72,86 @@ export function TrustChart({
   domain,
   currentCycle,
 }: TrustChartProps) {
-  const suppressionThreshold = currentCycle?.suppression_threshold ?? 0.84;
-
-  // Find suppression ranges from data
-  const supRanges: Array<{ start: number; end: number }> = [];
-  let rangeStart: number | null = null;
-  for (const point of trustHistory) {
-    const hasSuppression = domain.agentNames.some(
-      (a) => (point[a] ?? 1) < suppressionThreshold
-    );
-    if (hasSuppression && rangeStart === null) {
-      rangeStart = point.cycle;
-    } else if (!hasSuppression && rangeStart !== null) {
-      supRanges.push({ start: rangeStart, end: point.cycle });
-      rangeStart = null;
-    }
-  }
-  if (rangeStart !== null && trustHistory.length > 0) {
-    supRanges.push({
-      start: rangeStart,
-      end: trustHistory[trustHistory.length - 1].cycle,
-    });
-  }
-
   return (
-    <div className="glass-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">
-          Agent Trust Trajectories
-        </h3>
-        <div className="flex items-center gap-4">
+    <div className="panel p-5">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold mb-0.5">
+            Agent Trust Trajectories
+          </h3>
+          <p className="text-[11px] text-text-muted">
+            Real-time trust scores across governance cycles
+          </p>
+        </div>
+        <div className="flex items-center gap-5">
           {domain.agentNames.map((agent) => (
-            <div key={agent} className="flex items-center gap-1.5">
+            <div key={agent} className="flex items-center gap-2">
               <span
-                className="w-2 h-2 rounded-full"
+                className="w-2.5 h-0.5 rounded-full block"
                 style={{ backgroundColor: getAgentColor(agent) }}
               />
-              <span className="text-xs text-text-muted">
-                {agent.replace(/_/g, " ")}
+              <span className="text-[11px] text-text-muted">
+                {getAgentDisplayName(agent)}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={380}>
         <LineChart
           data={trustHistory}
-          margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+          margin={{ top: 8, right: 20, left: 0, bottom: 4 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(255,255,255,0.04)"
+            stroke="rgba(255,255,255,0.03)"
             vertical={false}
           />
           <XAxis
             dataKey="cycle"
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#52525b" }}
             label={{
               value: "Governance Cycle",
               position: "insideBottom",
               offset: -2,
-              style: { fontSize: 11, fill: "#64748b" },
+              style: { fontSize: 11, fill: "#52525b" },
             }}
           />
           <YAxis
             domain={[0.5, 1.05]}
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#52525b" }}
             tickFormatter={(v: number) => v.toFixed(2)}
           />
-          <Tooltip content={<CustomTooltip />} />
-
-          {/* Suppression zones */}
-          {supRanges.map((r, i) => (
-            <ReferenceArea
-              key={i}
-              x1={r.start}
-              x2={r.end}
-              fill="rgba(244,63,94,0.06)"
-              fillOpacity={1}
-            />
-          ))}
+          <Tooltip content={<ChartTooltip />} />
 
           {/* Threshold lines */}
           <ReferenceLine
             y={currentCycle?.trust_threshold ?? 0.78}
-            stroke="#fbbf24"
-            strokeDasharray="6 4"
+            stroke="#eab308"
+            strokeDasharray="8 6"
             strokeWidth={1}
+            strokeOpacity={0.5}
             label={{
-              value: "τ trust",
+              value: "\u03c4 trust",
               position: "right",
-              style: { fontSize: 10, fill: "#fbbf24" },
+              style: { fontSize: 10, fill: "#eab308", opacity: 0.7 },
             }}
           />
           <ReferenceLine
-            y={suppressionThreshold}
-            stroke="#f43f5e"
-            strokeDasharray="6 4"
+            y={currentCycle?.suppression_threshold ?? 0.84}
+            stroke="#ef4444"
+            strokeDasharray="8 6"
             strokeWidth={1}
+            strokeOpacity={0.4}
             label={{
-              value: "τ suppress",
+              value: "\u03c4 suppress",
               position: "right",
-              style: { fontSize: 10, fill: "#f43f5e" },
+              style: { fontSize: 10, fill: "#ef4444", opacity: 0.6 },
             }}
           />
 
@@ -187,7 +168,7 @@ export function TrustChart({
                 r: 4,
                 stroke: getAgentColor(agent),
                 strokeWidth: 2,
-                fill: "#06080f",
+                fill: "#09090b",
               }}
               animationDuration={400}
             />

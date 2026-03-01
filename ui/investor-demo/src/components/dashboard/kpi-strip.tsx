@@ -5,7 +5,7 @@ import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 import { Shield, TrendingUp, AlertTriangle, DollarSign } from "lucide-react";
 import type { CumulativeStats } from "@/lib/demo-data";
 
-function useAnimatedValue(target: number, duration = 800): number {
+function useAnimatedValue(target: number, duration = 600): number {
   const [value, setValue] = useState(0);
   const prevRef = useRef(0);
   const frameRef = useRef<number>(0);
@@ -20,7 +20,6 @@ function useAnimatedValue(target: number, duration = 800): number {
     function animate(now: number) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = start + diff * eased;
       setValue(current);
@@ -43,41 +42,42 @@ interface KpiCardProps {
   label: string;
   value: string;
   icon: React.ReactNode;
-  trend?: "up" | "down" | "neutral";
-  accent?: "cyan" | "emerald" | "rose" | "amber";
-  pulse?: boolean;
+  accent?: "blue" | "emerald" | "red" | "amber";
+  alert?: boolean;
 }
 
-function KpiCard({ label, value, icon, accent = "cyan", pulse }: KpiCardProps) {
-  const accentStyles = {
-    cyan: "border-cyan-500/20 bg-cyan-500/[0.03]",
-    emerald: "border-emerald-500/20 bg-emerald-500/[0.03]",
-    rose: "border-rose-500/20 bg-rose-500/[0.03]",
-    amber: "border-amber-500/20 bg-amber-500/[0.03]",
+function KpiCard({ label, value, icon, accent = "blue", alert }: KpiCardProps) {
+  const borderAccent = {
+    blue: "border-blue-500/15",
+    emerald: "border-emerald-500/15",
+    red: "border-red-500/15",
+    amber: "border-amber-500/15",
   };
 
-  const iconColors = {
-    cyan: "text-cyan-400",
+  const iconColor = {
+    blue: "text-blue-400",
     emerald: "text-emerald-400",
-    rose: "text-rose-400",
+    red: "text-red-400",
     amber: "text-amber-400",
   };
 
   return (
     <div
       className={cn(
-        "glass-card p-5 transition-all duration-500 relative overflow-hidden",
-        accentStyles[accent],
-        pulse && "pulse-danger"
+        "panel px-5 py-4 transition-all duration-500",
+        borderAccent[accent],
+        alert && "pulse-danger"
       )}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wider">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
           {label}
         </span>
-        <span className={cn("opacity-60", iconColors[accent])}>{icon}</span>
+        <span className={cn("opacity-50", iconColor[accent])}>{icon}</span>
       </div>
-      <div className="text-2xl font-bold tabular-nums tracking-tight">{value}</div>
+      <div className="text-2xl font-bold tabular-nums tracking-tight">
+        {value}
+      </div>
     </div>
   );
 }
@@ -104,14 +104,14 @@ export function KpiStrip({ stats, lossLabel }: KpiStripProps) {
         label="Active Agents"
         value={`${stats.activeAgents} / ${stats.totalAgents}`}
         icon={<Shield className="w-4 h-4" />}
-        accent={stats.activeAgents < stats.totalAgents ? "rose" : "cyan"}
-        pulse={stats.activeAgents < stats.totalAgents}
+        accent={stats.activeAgents < stats.totalAgents ? "red" : "blue"}
+        alert={stats.activeAgents < stats.totalAgents}
       />
       <KpiCard
         label={lossLabel}
         value={formatCurrency(animatedLoss)}
         icon={<AlertTriangle className="w-4 h-4" />}
-        accent={animatedLoss > 0 ? "rose" : "emerald"}
+        accent={animatedLoss > 0 ? "red" : "emerald"}
       />
       <KpiCard
         label="Losses Prevented"

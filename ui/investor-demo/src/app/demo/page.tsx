@@ -16,10 +16,7 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Background */}
-      <div className="fixed inset-0 dot-grid opacity-30 pointer-events-none" />
-
-      <div className="relative z-10 flex flex-col flex-1 p-5 gap-4 max-w-[1600px] mx-auto w-full">
+      <div className="relative z-10 flex flex-col flex-1 px-5 pt-4 pb-2 gap-4 max-w-[1520px] mx-auto w-full">
         {/* Header with domain tabs */}
         <DomainHeader
           activeDomain={player.domain}
@@ -39,48 +36,37 @@ export default function DemoPage() {
           lossLabel={player.domainConfig.lossLabel}
         />
 
-        {/* Main content area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
-          {/* Trust chart - takes 2/3 */}
-          <div className="lg:col-span-2">
+        {/* Main content: trust chart (8 cols) + sidebar (4 cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
+          {/* Left: charts stacked */}
+          <div className="lg:col-span-8 flex flex-col gap-4">
             <TrustChart
               trustHistory={player.trustHistory}
               domain={player.domainConfig}
               currentCycle={player.currentCycle}
             />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ThresholdChart thresholdHistory={player.thresholdHistory} />
+              <ComparisonPanel
+                stats={player.stats}
+                lossLabel={player.domainConfig.lossLabel}
+              />
+            </div>
           </div>
 
-          {/* Agent cards - takes 1/3 */}
-          <div>
+          {/* Right: agents + events */}
+          <div className="lg:col-span-4 flex flex-col gap-4">
             <AgentCards
               currentCycle={player.currentCycle}
               domain={player.domainConfig}
             />
+            <div className="flex-1 min-h-0">
+              <EventStream events={player.visibleEvents} />
+            </div>
           </div>
         </div>
 
-        {/* Bottom row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Event stream */}
-          <div className="lg:col-span-1">
-            <EventStream events={player.visibleEvents} />
-          </div>
-
-          {/* Threshold chart */}
-          <div className="lg:col-span-1">
-            <ThresholdChart thresholdHistory={player.thresholdHistory} />
-          </div>
-
-          {/* Comparison panel */}
-          <div className="lg:col-span-1">
-            <ComparisonPanel
-              stats={player.stats}
-              lossLabel={player.domainConfig.lossLabel}
-            />
-          </div>
-        </div>
-
-        {/* Timeline controls */}
+        {/* Timeline controls - sticky bottom */}
         <TimelineControls
           playState={player.playState}
           speed={player.speed}
