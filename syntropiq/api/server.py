@@ -12,17 +12,21 @@ import random
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from syntropiq.api.telemetry import GovernanceTelemetryHub
 from syntropiq.core.config import SyntropiqConfig
+from syntropiq.core.context import generate_request_id, set_request_id
+from syntropiq.core.invariants import Invariants, emit_violations, mode_from_env
+from syntropiq.core.logging import configure_logging
 from syntropiq.core.models import Task
 from syntropiq.execution.deterministic_executor import DeterministicExecutor
 from syntropiq.governance.loop import GovernanceLoop
 from syntropiq.governance.mutation_engine import MutationEngine
 from syntropiq.persistence.agent_registry import AgentRegistry
 from syntropiq.persistence.state_manager import PersistentStateManager
+from syntropiq.api.state_manager import PersistentStateManager as TelemetryStateManager
 from syntropiq.demo.fraud.data import RealDataPool, generate_fraud_batch
 from syntropiq.demo.fraud.executor import FraudDetectionExecutor
 from syntropiq.demo.fraud.run import AGENT_PROFILES, DRIFT_AGENT, create_agents
@@ -39,6 +43,7 @@ mutation_engine: MutationEngine = None
 executor: DeterministicExecutor = None
 config: SyntropiqConfig = None
 telemetry_hub: GovernanceTelemetryHub = None
+telemetry_state_manager: TelemetryStateManager = None
 
 demo_stream_task: asyncio.Task | None = None
 demo_stream_running: bool = False
@@ -498,9 +503,10 @@ async def fraud_demo_stream():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global state_manager, agent_registry, governance_loop
-    global mutation_engine, executor, config, telemetry_hub
+    global mutation_engine, executor, config, telemetry_hub, telemetry_state_manager
 
     config = SyntropiqConfig.from_env()
+    configure_logging()
 
     print("\n" + "=" * 60)
     print("🚀 Syntropiq Governance Engine - Starting...")
@@ -509,10 +515,33 @@ async def lifespan(app: FastAPI):
     state_manager = PersistentStateManager(db_path=config.database.db_path)
     agent_registry = AgentRegistry(state_manager)
 
+    telemetry_state_manager = TelemetryStateManager()
     telemetry_hub = GovernanceTelemetryHub(
+        state_manager=telemetry_state_manager,
         max_events=int(os.getenv("GOVERNANCE_EVENT_BUFFER_MAX", "2000")),
         max_cycles=int(os.getenv("GOVERNANCE_CYCLE_BUFFER_MAX", "500")),
     )
+
+    def _report_invariant_violations(violations, base_metadata):
+        if mode_from_env() == "off":
+            return
+        emit_violations(telemetry_hub, violations, base_metadata=base_metadata)
+
+    startup_invariant_violations = Invariants.check_gamma_eta(
+        gamma=config.governance.asymmetric_penalty,
+        eta=config.governance.asymmetric_reward,
+    )
+    if startup_invariant_violations:
+        emit_violations(
+            telemetry_hub,
+            startup_invariant_violations,
+            base_metadata={
+                "run_id": "STARTUP",
+                "cycle_id": "STARTUP:invariants",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "component": "startup",
+            },
+        )
 
     if os.getenv("SYNTROPIQ_DEMO_MODE", "true").lower() == "true":
         existing = agent_registry.list_agents()
@@ -534,6 +563,7 @@ async def lifespan(app: FastAPI):
         initial_suppression_threshold=config.governance.suppression_threshold,
         initial_drift_delta=config.governance.drift_detection_delta,
         state_manager=state_manager,
+        invariant_reporter=_report_invariant_violations,
     )
 
     governance_loop.trust_engine.trust_threshold = mutation_engine.trust_threshold
@@ -571,6 +601,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("x-request-id") or generate_request_id()
+    set_request_id(request_id)
+    response = await call_next(request)
+    response.headers["x-request-id"] = request_id
+    return response
 
 
 @app.get("/")

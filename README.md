@@ -186,3 +186,277 @@ Proprietary - Patent Protected
 
 🤝 Support
 For questions or support, contact:erik@syntropiq.ai
+
+## Invariants Mode
+
+Set `INVARIANTS_MODE` to control read-only invariant checks:
+
+- `off`: disable invariant checks and alerts
+- `log`: emit `system_alert` telemetry events for violations (default)
+- `enforce`: reserved for a future blocking mode (currently non-blocking)
+
+
+## Audit Chain Mode
+
+Set `AUDIT_CHAIN_MODE` to control tamper-evident ledger hashing for telemetry persistence:
+
+- `off`: disable hash-chain computation/storage
+- `log`: compute and store `chain_id`, `prev_hash`, `hash`, and `hash_algo` for events/cycles (default)
+
+This mode is non-blocking in Phase 2 and does not change governance decisions.
+
+## Mutation Envelope Controls
+
+Set bounded adaptive mutation controls with environment variables:
+
+- `MUTATION_WARMUP_CYCLES=5`: cycles before any loosening is allowed
+- `MUTATION_MAX_STEP=0.02`: maximum per-cycle mutation step size
+- `MUTATION_DAMPEN_ON_SUPPRESSION=true`: block loosening while suppression is active
+
+## Replay Validation and Reproducibility
+
+Replay validation checks deterministic reproducibility using persisted telemetry cycles/events.
+
+Signals compared per cycle:
+
+- selected agents (exact match)
+- trust trajectory by agent (normalized MAE agreement)
+- mutation thresholds (normalized MAE agreement)
+- suppression set (exact match)
+
+Reproducibility score:
+
+- `r = 0.35*selection_match + 0.35*trust_corr + 0.2*threshold_corr + 0.1*suppression_match`
+- each component is in `[0, 1]`
+
+Replay modes:
+
+- `light`: validates deterministic agreement from persisted governance signals only
+- `full`: attempts full-fidelity replay; if required artifacts are missing, falls back to `light` with explanation
+
+Validate over API:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/replay/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "run_id": "LIVE_STREAM",
+    "threshold": 0.99,
+    "seed": 123,
+    "mode": "light"
+  }'
+```
+
+CI-friendly local check:
+
+```bash
+python -m syntropiq.tools.replay_check --run-id LIVE_STREAM --threshold 0.99 --mode light
+```
+
+## Optimize Layer (Lambda Objective)
+
+Feature flag:
+
+- `OPTIMIZE_MODE=off|score|integrate` (default: `off`)
+  - `off`: no optimize behavior change
+  - `score`: enable optimize scoring API only
+  - `integrate`: apply optimize ordering inside governance loop (non-invasive, flag-gated)
+
+Lambda defaults:
+
+- `OPTIMIZE_LAMBDA_DEFAULTS='{\"l_cost\":0.25,\"l_time\":0.25,\"l_risk\":0.25,\"l_trust\":0.25}'`
+- or individual env vars:
+  - `OPT_L_COST`, `OPT_L_TIME`, `OPT_L_RISK`, `OPT_L_TRUST`
+
+Objective:
+
+- components:
+  - `cost = 1 - impact`
+  - `time = 1 - urgency`
+  - `risk = risk`
+  - `trust = avg_trust_term`
+- score:
+  - `score = λ1*cost + λ2*time + λ3*risk - λ4*trust`
+- ordering:
+  - deterministic `sort(score asc, task.id asc)`
+- normalization:
+  - `Σλ = 1`
+
+Optimize audit endpoints:
+
+- `POST /api/v1/optimize/score`
+- `GET /api/v1/optimize/events?run_id=...&limit=...`
+- `GET /api/v1/optimize/verify?run_id=...`
+
+All optimize decisions are persisted in an audit-chain ledger (`optimization_events`) for tamper-evident verification.
+
+## Reflect Layer (Fs + Foresight + Constraints)
+
+Feature flag:
+
+- `REFLECT_MODE=off|score|integrate` (default: `off`)
+  - `off`: reflect endpoints/integration disabled
+  - `score`: enable explicit reflect scoring endpoints
+  - `integrate`: additionally write a reflect insight after each governance cycle (advisory-only)
+
+Fs equation:
+
+- `Fs = Σ w_i * (A_i - D_i) - total_penalty`
+- `w_i` uses geometric decay (`decay^i`) and is normalized so `Σw=1`
+- `Fs` is clamped to `[-1, 1]`
+
+Horizon model:
+
+- deterministic N-step projection:
+  - `trust(t+1) = clamp(trust(t) + expected_delta, 0, 1)`
+  - expected delta estimated from recent `trust_delta_total`
+  - suppression-active runs apply an additional `-0.01` per step
+
+Constraint kernel penalties (`p_i`):
+
+- trust floor (min trust vs trust_threshold)
+- suppression rate bound
+- drift delta limit
+- instability bound (threshold movement)
+- replay reproducibility floor (`r >= 0.99` when available)
+
+Insight ledger endpoints:
+
+- `POST /api/v1/reflect/run`
+- `GET /api/v1/reflect/decisions?run_id=...&limit=...`
+- `GET /api/v1/reflect/verify?run_id=...`
+
+Reflect decisions are persisted in `insight_ledger` with audit-chain hashing for tamper-evident verification.
+
+## Adaptive Lambda Recalibration (Phase 6)
+
+Feature flag:
+
+- `OPTIMIZE_LAMBDA_ADAPT_MODE=off|log|apply` (default `off`)
+  - `off`: no lambda recalibration
+  - `log`: compute and persist recommended lambda only
+  - `apply`: persist and apply recommended lambda for future optimize calls
+
+Adaptive signals:
+
+- `avg_trust`, `suppression_active`, `drift_delta`, `r_score_latest`, `A_score`, `failure_rate`
+- bounded per-step changes (`|delta| <= 0.02`)
+- post-update clamp + normalization (`Σλ=1`, each `λ∈[0,1]`, trust cap supported)
+
+Endpoints:
+
+- `POST /api/v1/optimize/lambda/recommend`
+- `POST /api/v1/optimize/lambda/apply`
+- `GET /api/v1/optimize/lambda/history?run_id=...`
+- `GET /api/v1/optimize/lambda/verify?run_id=...`
+
+## Bayesian Risk Posterior (Phase 7)
+
+Feature flag:
+
+- `OPTIMIZE_BAYES_MODE=off|log|apply` (default `off`)
+
+Posterior model:
+
+- Beta posterior with deterministic update:
+  - `alpha = alpha0 + successes`
+  - `beta = beta0 + failures`
+  - `mean = alpha / (alpha + beta)`
+  - `uncertainty = 1 / (alpha + beta)`
+- posterior can conservatively increase risk weight recommendation.
+
+Endpoints:
+
+- `GET /api/v1/optimize/bayes?run_id=...&window=...`
+- `GET /api/v1/optimize/bayes/verify?run_id=...`
+
+## Consensus Foresight (Phase 8)
+
+Feature flag:
+
+- `REFLECT_CONSENSUS_MODE=off|log|integrate` (default `off`)
+
+Consensus method:
+
+- deterministic profile set (`safety`, `efficiency`, `balanced`)
+- per-profile reflect Fs computed on same inputs
+- consensus Fs = median(profile Fs)
+- disagreement = median absolute deviation
+- deterministic outlier flagging around median.
+
+Endpoints:
+
+- `POST /api/v1/reflect/consensus`
+- `GET /api/v1/reflect/consensus/decisions?run_id=...`
+- `GET /api/v1/reflect/consensus/verify?run_id=...`
+
+## Governance-Driven Healing Reflex
+
+Feature flag:
+
+- `HEALING_MODE=off|integrate` (default `off`)
+
+Deterministic gating controls:
+
+- `HEALING_CRISIS_MIN_CYCLES=5`
+- `HEALING_FS_SLOPE_MIN=0.01`
+- `HEALING_FS_SLOPE_WINDOW=3`
+- `HEALING_POSTERIOR_MEAN_MIN=0.80`
+- `HEALING_POSTERIOR_UNCERT_MAX=0.10`
+- `HEALING_TRUST_STEP=0.02`
+- `HEALING_TRUST_CAP=0.70`
+
+When enabled, the loop can rehabilitate one suppressed agent per eligible cycle using
+Reflect trend + Bayes confidence gates. Rehabilitation is bounded, deterministic, and
+emits telemetry events for audit.
+
+## Investor Demo Runner
+
+Run a deterministic investor-facing end-to-end scenario (default 30 cycles, 5-minute windows) using the real governance stack and persistent ledgers:
+
+```bash
+python -m syntropiq.tools.investor_demo_runner --run-id INVESTOR_DEMO_001
+```
+
+Useful options:
+
+- `--cycles` (default `30`)
+- `--window-minutes` (default `5`)
+- `--batch-size` (default `12`)
+- `--seed` (default `20260228`)
+- `--drift-start` / `--drift-end` (defaults `6` / `12`)
+- `--drift-agent` (default `beta`)
+- `--output-json` (default `investor_demo_output.json`)
+
+The runner:
+
+- enables integration modes in-process
+- executes real governance cycles with deterministic simulated inputs
+- persists telemetry and ledgers to `syntropiq_telemetry.db`
+- computes replay `r` score
+- verifies telemetry + optimize + lambda + bayes + reflect + consensus chains
+- writes a JSON artifact with per-cycle narrative and final certification block.
+
+## Internal Validation Harness
+
+Run deterministic multi-scenario internal validation (no UI):
+
+```bash
+python3 -m syntropiq.tools.internal_validation_runner --run-prefix VALID --seeds 5 --cycles 30
+```
+
+What it runs:
+
+- `mild_drift`
+- `severe_adversarial`
+- `noisy_stability`
+
+Per scenario, it executes N seeded runs through the real governance stack (Govern + Optimize + Bayes + Reflect + Consensus + Healing), writes artifacts under `validation_artifacts/<scenario>/`, and evaluates:
+
+- certification flag
+- replay `r >= 0.99`
+- chain verification across ledgers
+- no suppression deadlock
+- recovery/stability expectations by scenario
+
+Expected runtime: a few minutes depending on seed count and cycle count.

@@ -26,6 +26,12 @@ class TaskSubmissionRequest(BaseModel):
     run_id: Optional[str] = Field(None, description="Optional cycle identifier")
 
 
+class ActorSchema(BaseModel):
+    user_id: str
+    role: str
+    source: str = "control-plane"
+
+
 class GovernanceCycleResponse(BaseModel):
     """Response from governance cycle execution."""
 
@@ -108,6 +114,7 @@ class GovernanceCycleResponseV1(BaseModel):
     run_id: str
     cycle_id: str
     timestamp: str
+    request_id: Optional[str] = None
     total_agents: int
     successes: int
     failures: int
