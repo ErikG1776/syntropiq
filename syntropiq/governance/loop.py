@@ -122,6 +122,7 @@ class GovernanceLoop:
                 # Keep integrate mode non-invasive: optimization failures must not block execution.
                 pass
 
+        suppressed_before = set(self.trust_engine.suppressed_agents.keys())
         try:
             assignments = self.trust_engine.assign_agents(sorted_tasks, agents)
         except RuntimeError as e:
@@ -175,9 +176,12 @@ class GovernanceLoop:
         self.state.record_execution_results(results)
         self.state.record_reflection(reflection["reflection"], reflection)
 
-        for aid in self.trust_engine.suppressed_agents:
+        suppressed_now = set(self.trust_engine.suppressed_agents.keys())
+        for aid in suppressed_now:
             cycles = self.trust_engine.suppressed_agents[aid]
             self.state.update_suppression_state(aid, is_suppressed=True, redemption_cycle=cycles)
+        for aid in suppressed_before - suppressed_now:
+            self.state.update_suppression_state(aid, is_suppressed=False, redemption_cycle=0)
 
         successes = sum(1 for r in results if r.success)
         failures = sum(1 for r in results if not r.success)

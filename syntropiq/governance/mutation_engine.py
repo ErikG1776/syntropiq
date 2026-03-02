@@ -144,9 +144,9 @@ class MutationEngine:
             action = "TIGHTENING (poor performance)"
         elif delta > 0.05:  # Significantly above target
             # System performing well - DECREASE thresholds (more aggressive)
-            trust_delta = -self.mutation_rate
-            suppression_delta = -self.mutation_rate
-            drift_delta = -0.02
+            trust_delta = -(self.mutation_rate * 0.2)
+            suppression_delta = -(self.mutation_rate * 0.2)
+            drift_delta = -0.01
             action = "LOOSENING (excellent performance)"
         else:
             # Performance near target - hold thresholds stable.

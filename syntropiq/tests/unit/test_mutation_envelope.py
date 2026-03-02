@@ -48,9 +48,9 @@ def test_post_warmup_loosens_with_max_step_cap():
     engine.evaluate_and_mutate(_results(True), cycle_id="RUN:1", suppression_active=False)
     out = engine.evaluate_and_mutate(_results(True), cycle_id="RUN:2", suppression_active=False)
 
-    assert out["trust_threshold"] == pytest.approx(0.68)
-    assert out["suppression_threshold"] == pytest.approx(0.73)
-    assert out["drift_delta"] == pytest.approx(0.08)
+    assert out["trust_threshold"] == pytest.approx(0.69)
+    assert out["suppression_threshold"] == pytest.approx(0.74)
+    assert out["drift_delta"] == pytest.approx(0.09)
 
 
 def test_suppression_active_blocks_loosening():
