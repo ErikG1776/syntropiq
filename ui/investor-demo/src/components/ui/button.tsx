@@ -1,41 +1,47 @@
-import { cn } from "@/lib/utils";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
-type ButtonSize = "sm" | "md" | "lg";
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        secondary:
+          "bg-secondary text-secondary-foreground border border-border hover:bg-muted",
+        ghost: "text-muted-foreground hover:text-foreground hover:bg-muted",
+        destructive: "bg-destructive text-white hover:bg-destructive/90",
+        outline:
+          "border border-border bg-transparent text-foreground hover:bg-muted",
+      },
+      size: {
+        sm: "h-8 px-3 text-xs rounded-lg",
+        default: "h-9 px-4 text-sm rounded-lg",
+        lg: "h-11 px-6 text-base rounded-xl",
+        icon: "h-9 w-9 rounded-lg",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
 
-const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "bg-accent text-background font-semibold hover:bg-accent/90 glow-accent",
-  secondary:
-    "bg-white/5 text-text-primary border border-border hover:bg-white/10 hover:border-border-bright",
-  ghost:
-    "text-text-secondary hover:text-text-primary hover:bg-white/5",
-};
+interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
 
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-xs rounded-lg",
-  md: "px-5 py-2.5 text-sm rounded-xl",
-  lg: "px-8 py-3.5 text-base rounded-xl",
-};
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-}
-
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => (
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => (
     <button
       ref={ref}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
-        variantStyles[variant],
-        sizeStyles[size],
-        className
-      )}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   )
 );
 Button.displayName = "Button";
+
+export { Button, buttonVariants };

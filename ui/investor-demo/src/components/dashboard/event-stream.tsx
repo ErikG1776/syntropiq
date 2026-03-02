@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { GovernanceEvent } from "@/lib/demo-data";
 import {
   ShieldOff,
@@ -14,15 +15,19 @@ import {
 
 const eventConfig: Record<
   GovernanceEvent["type"],
-  { icon: typeof ShieldOff; color: string }
+  {
+    icon: typeof ShieldOff;
+    badge: "info" | "warning" | "destructive" | "success";
+    label: string;
+  }
 > = {
-  agent_suppressed: { icon: ShieldOff, color: "text-red-400" },
-  agent_restored: { icon: ShieldCheck, color: "text-emerald-400" },
-  drift_detected: { icon: AlertTriangle, color: "text-amber-400" },
-  threshold_mutated: { icon: Settings, color: "text-blue-400" },
-  loss_detected: { icon: TrendingDown, color: "text-red-400" },
-  system_healthy: { icon: Activity, color: "text-emerald-400" },
-  probation_started: { icon: ShieldCheck, color: "text-amber-400" },
+  agent_suppressed: { icon: ShieldOff, badge: "destructive", label: "Suppressed" },
+  agent_restored: { icon: ShieldCheck, badge: "success", label: "Restored" },
+  drift_detected: { icon: AlertTriangle, badge: "warning", label: "Drift" },
+  threshold_mutated: { icon: Settings, badge: "info", label: "Adapted" },
+  loss_detected: { icon: TrendingDown, badge: "destructive", label: "Loss" },
+  system_healthy: { icon: Activity, badge: "success", label: "Healthy" },
+  probation_started: { icon: ShieldCheck, badge: "warning", label: "Probation" },
 };
 
 interface EventStreamProps {
@@ -30,7 +35,7 @@ interface EventStreamProps {
   maxEvents?: number;
 }
 
-export function EventStream({ events, maxEvents = 25 }: EventStreamProps) {
+export function EventStream({ events, maxEvents = 20 }: EventStreamProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,47 +47,52 @@ export function EventStream({ events, maxEvents = 25 }: EventStreamProps) {
   const visible = events.slice(-maxEvents);
 
   return (
-    <div className="panel p-5 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold">Event Feed</h3>
-        <span className="text-[11px] font-mono text-text-muted">
-          {events.length}
-        </span>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-1.5 min-h-0"
-        style={{ maxHeight: 280 }}
-      >
-        {visible.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-text-muted text-sm">
-            No events yet
+    <Card className="flex flex-col h-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Governance Events</CardTitle>
+            <CardDescription className="mt-1">Decision log</CardDescription>
           </div>
-        ) : (
-          visible.map((event, i) => {
-            const cfg = eventConfig[event.type];
-            const Icon = cfg.icon;
+          <span className="text-[11px] font-mono text-muted-foreground">
+            {events.length}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 min-h-0 pt-0">
+        <div
+          ref={scrollRef}
+          className="overflow-y-auto space-y-1.5"
+          style={{ maxHeight: 260 }}
+        >
+          {visible.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+              No events yet
+            </div>
+          ) : (
+            visible.map((event, i) => {
+              const cfg = eventConfig[event.type];
 
-            return (
-              <div
-                key={`${event.cycle}-${event.type}-${i}`}
-                className="flex items-start gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.02] transition-colors fade-in"
-              >
-                <div className={cn("mt-0.5 shrink-0", cfg.color)}>
-                  <Icon className="w-3.5 h-3.5" />
+              return (
+                <div
+                  key={`${event.cycle}-${event.type}-${i}`}
+                  className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors fade-in"
+                >
+                  <Badge variant={cfg.badge} className="shrink-0 mt-0.5 text-[9px] px-1.5">
+                    {cfg.label}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground leading-relaxed flex-1 min-w-0">
+                    {event.message}
+                  </p>
+                  <span className="text-[10px] font-mono text-muted-foreground shrink-0 mt-0.5">
+                    {event.cycle}
+                  </span>
                 </div>
-                <p className="text-xs text-text-secondary leading-relaxed flex-1 min-w-0">
-                  {event.message}
-                </p>
-                <span className="text-[10px] font-mono text-text-muted shrink-0 mt-0.5">
-                  {event.cycle}
-                </span>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
+              );
+            })
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -7,7 +7,7 @@ import { KpiStrip } from "@/components/dashboard/kpi-strip";
 import { TrustChart } from "@/components/dashboard/trust-chart";
 import { AgentCards } from "@/components/dashboard/agent-cards";
 import { EventStream } from "@/components/dashboard/event-stream";
-import { ComparisonPanel } from "@/components/dashboard/comparison-panel";
+import { EnterpriseImpact } from "@/components/dashboard/enterprise-impact";
 import { ThresholdChart } from "@/components/dashboard/threshold-chart";
 import { TimelineControls } from "@/components/dashboard/timeline-controls";
 
@@ -16,29 +16,29 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="relative z-10 flex flex-col flex-1 px-5 pt-4 pb-2 gap-4 max-w-[1520px] mx-auto w-full">
-        {/* Header with domain tabs */}
+      <div className="relative z-10 flex flex-col flex-1 max-w-7xl mx-auto w-full px-6 pt-4 pb-3 gap-4">
+        {/* Header */}
         <DomainHeader
           activeDomain={player.domain}
           onDomainChange={player.setDomain}
         />
 
-        {/* Narration banner */}
+        {/* Narration */}
         <NarrationBanner
           currentCycle={player.currentCycle}
           events={player.visibleEvents}
           domain={player.domainConfig}
         />
 
-        {/* KPI strip */}
+        {/* KPIs */}
         <KpiStrip
           stats={player.stats}
-          lossLabel={player.domainConfig.lossLabel}
+          domain={player.domainConfig}
         />
 
-        {/* Main content: trust chart (8 cols) + sidebar (4 cols) */}
+        {/* Main grid: left content (8/12) + right sidebar (4/12) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
-          {/* Left: charts stacked */}
+          {/* Left column */}
           <div className="lg:col-span-8 flex flex-col gap-4">
             <TrustChart
               trustHistory={player.trustHistory}
@@ -47,14 +47,14 @@ export default function DemoPage() {
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ThresholdChart thresholdHistory={player.thresholdHistory} />
-              <ComparisonPanel
+              <EnterpriseImpact
                 stats={player.stats}
-                lossLabel={player.domainConfig.lossLabel}
+                domain={player.domainConfig}
               />
             </div>
           </div>
 
-          {/* Right: agents + events */}
+          {/* Right column: agents + events */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             <AgentCards
               currentCycle={player.currentCycle}
@@ -66,7 +66,7 @@ export default function DemoPage() {
           </div>
         </div>
 
-        {/* Timeline controls - sticky bottom */}
+        {/* Timeline controls */}
         <TimelineControls
           playState={player.playState}
           speed={player.speed}

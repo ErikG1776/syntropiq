@@ -1,31 +1,38 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090b;
-  --color-surface: #111113;
-  --color-surface-elevated: #18181b;
-  --color-surface-hover: #1e1e22;
-  --color-border: rgba(255, 255, 255, 0.07);
-  --color-border-bright: rgba(255, 255, 255, 0.14);
+  /* ── Deep Navy Palette (Slate scale) ───────────────────────── */
+  --color-background: #020617;
+  --color-foreground: #f8fafc;
+  --color-card: #0f172a;
+  --color-card-foreground: #f1f5f9;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #64748b;
+  --color-border: #1e293b;
+  --color-input: #1e293b;
+  --color-ring: #3b82f6;
 
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #52525b;
-
-  --color-accent: #3b82f6;
-  --color-accent-bright: #60a5fa;
-  --color-accent-dim: rgba(59, 130, 246, 0.12);
-
+  /* ── Semantic Colors ───────────────────────────────────────── */
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1e293b;
+  --color-secondary-foreground: #f1f5f9;
+  --color-destructive: #ef4444;
   --color-success: #22c55e;
-  --color-success-dim: rgba(34, 197, 94, 0.10);
-  --color-danger: #ef4444;
-  --color-danger-dim: rgba(239, 68, 68, 0.10);
   --color-warning: #eab308;
-  --color-warning-dim: rgba(234, 179, 8, 0.10);
+  --color-info: #3b82f6;
 
+  /* ── Typography ────────────────────────────────────────────── */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+
+  /* ── Radius ────────────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 }
+
+/* ── Base ─────────────────────────────────────────────────────── */
 
 * {
   margin: 0;
@@ -33,81 +40,49 @@
   box-sizing: border-box;
 }
 
-html {
-  color-scheme: dark;
-}
+html { color-scheme: dark; }
 
 body {
   background: var(--color-background);
-  color: var(--color-text-primary);
+  color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Card surfaces ──────────────────────────────────────────── */
+/* ── Tabular Nums ─────────────────────────────────────────────── */
 
-.panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-}
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
-.panel-elevated {
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border-bright);
-  border-radius: 16px;
-}
-
-/* ─── Utility ────────────────────────────────────────────────── */
-
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ─── Animations ─────────────────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────────────── */
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-.fade-in {
-  animation: fade-in 0.35s ease-out;
-}
+.fade-in { animation: fade-in 0.3s ease-out; }
 
 @keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.25); }
   50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
 }
+.pulse-danger { animation: pulse-ring 2s ease-in-out infinite; }
 
-.pulse-danger {
-  animation: pulse-ring 2s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* ─── Scrollbar ──────────────────────────────────────────────── */
+/* ── Scrollbar ────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.12); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.2); }
 
-/* ─── Recharts overrides ─────────────────────────────────────── */
+/* ── Recharts Overrides ───────────────────────────────────────── */
 
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: rgba(255, 255, 255, 0.04);
+  stroke: rgba(148, 163, 184, 0.06);
 }
 
 .recharts-text {
-  fill: var(--color-text-muted) !important;
+  fill: var(--color-muted-foreground) !important;
   font-size: 11px !important;
 }

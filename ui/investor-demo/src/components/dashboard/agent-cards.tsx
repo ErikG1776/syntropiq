@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { CycleData, DomainConfig } from "@/lib/demo-data";
 import { getAgentDisplayName, getAgentStatus } from "@/lib/demo-data";
 import { ShieldCheck, ShieldOff, ShieldAlert, AlertTriangle } from "lucide-react";
@@ -10,111 +12,103 @@ interface AgentCardsProps {
   domain: DomainConfig;
 }
 
+const statusConfig = {
+  active: {
+    icon: ShieldCheck,
+    label: "Active",
+    badge: "success" as const,
+    barColor: "bg-success",
+  },
+  suppressed: {
+    icon: ShieldOff,
+    label: "Suppressed",
+    badge: "destructive" as const,
+    barColor: "bg-destructive",
+  },
+  probation: {
+    icon: ShieldAlert,
+    label: "Probation",
+    badge: "warning" as const,
+    barColor: "bg-warning",
+  },
+  drifting: {
+    icon: AlertTriangle,
+    label: "Drifting",
+    badge: "warning" as const,
+    barColor: "bg-warning",
+  },
+};
+
 export function AgentCards({ currentCycle, domain }: AgentCardsProps) {
-  if (!currentCycle) {
-    return (
-      <div className="panel p-5">
-        <h3 className="text-sm font-semibold mb-4">Agent Status</h3>
-        <div className="flex items-center justify-center h-28 text-text-muted text-sm">
-          Waiting for demo to start...
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="panel p-5">
-      <h3 className="text-sm font-semibold mb-4">Agent Status</h3>
-      <div className="space-y-3">
-        {domain.agentNames.map((agent) => {
-          const status = getAgentStatus(agent, currentCycle);
-          const trust = currentCycle.trust_scores[agent] ?? 0;
-          const isDrift = agent === domain.driftAgent;
+    <Card>
+      <CardHeader>
+        <CardTitle>Agent Status</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {!currentCycle ? (
+          <div className="flex items-center justify-center h-28 text-muted-foreground text-sm">
+            Waiting for demo...
+          </div>
+        ) : (
+          domain.agentNames.map((agent) => {
+            const status = getAgentStatus(agent, currentCycle);
+            const trust = currentCycle.trust_scores[agent] ?? 0;
+            const isDrift = agent === domain.driftAgent;
+            const cfg = statusConfig[status];
+            const StatusIcon = cfg.icon;
 
-          const config = {
-            active: {
-              icon: ShieldCheck,
-              label: "Active",
-              color: "text-emerald-400",
-              border: "border-emerald-500/20",
-              barColor: "bg-emerald-500",
-              bg: "",
-            },
-            suppressed: {
-              icon: ShieldOff,
-              label: "Suppressed",
-              color: "text-red-400",
-              border: "border-red-500/25",
-              barColor: "bg-red-500",
-              bg: "bg-red-500/[0.04]",
-            },
-            probation: {
-              icon: ShieldAlert,
-              label: "Probation",
-              color: "text-amber-400",
-              border: "border-amber-500/20",
-              barColor: "bg-amber-500",
-              bg: "bg-amber-500/[0.04]",
-            },
-            drifting: {
-              icon: AlertTriangle,
-              label: "Drifting",
-              color: "text-amber-400",
-              border: "border-amber-500/20",
-              barColor: "bg-amber-500",
-              bg: "bg-amber-500/[0.04]",
-            },
-          };
-
-          const cfg = config[status];
-          const StatusIcon = cfg.icon;
-
-          return (
-            <div
-              key={agent}
-              className={cn(
-                "p-3.5 rounded-xl border transition-all duration-500",
-                cfg.border,
-                cfg.bg,
-                status === "suppressed" && "pulse-danger"
-              )}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <StatusIcon className={cn("w-4 h-4", cfg.color)} />
-                  <span className="text-sm font-medium">
-                    {getAgentDisplayName(agent)}
-                  </span>
-                  {isDrift && (
-                    <span className="text-[9px] font-mono text-text-muted bg-white/5 px-1.5 py-0.5 rounded tracking-wider">
-                      DRIFT TARGET
+            return (
+              <div
+                key={agent}
+                className={cn(
+                  "p-3 rounded-lg border transition-all duration-500",
+                  status === "suppressed"
+                    ? "border-destructive/20 bg-destructive/[0.03] pulse-danger"
+                    : status === "probation"
+                      ? "border-warning/20 bg-warning/[0.03]"
+                      : "border-border"
+                )}
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <StatusIcon className={cn("w-3.5 h-3.5", {
+                      "text-success": status === "active",
+                      "text-destructive": status === "suppressed",
+                      "text-warning": status === "probation" || status === "drifting",
+                    })} />
+                    <span className="text-sm font-medium">
+                      {getAgentDisplayName(agent)}
                     </span>
-                  )}
-                </div>
-                <span className={cn("text-[11px] font-medium", cfg.color)}>
-                  {cfg.label}
-                </span>
-              </div>
-
-              {/* Trust bar */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-700",
-                      cfg.barColor
+                    {isDrift && (
+                      <Badge variant="outline" className="text-[9px] py-0">
+                        DRIFT TARGET
+                      </Badge>
                     )}
-                    style={{ width: `${Math.max(trust * 100, 0)}%` }}
-                  />
+                  </div>
+                  <Badge variant={cfg.badge}>{cfg.label}</Badge>
                 </div>
-                <span className="text-xs font-mono text-text-secondary tabular-nums w-12 text-right">
-                  {trust.toFixed(3)}
-                </span>
+
+                {/* Trust bar */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-700",
+                        cfg.barColor
+                      )}
+                      style={{ width: `${Math.max(trust * 100, 0)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground tabular-nums w-12 text-right">
+                    {trust.toFixed(3)}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            );
+          })
+        )}
+      </CardContent>
+    </Card>
   );
 }

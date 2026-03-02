@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { CycleData, DomainConfig, GovernanceEvent } from "@/lib/demo-data";
 import {
   Activity,
@@ -10,15 +11,13 @@ import {
   Zap,
 } from "lucide-react";
 
+type Severity = "info" | "warning" | "danger" | "success";
+
 function getNarration(
   currentCycle: CycleData | null,
   events: GovernanceEvent[],
   domain: DomainConfig
-): {
-  text: string;
-  severity: "info" | "warning" | "danger" | "success";
-  icon: typeof Activity;
-} {
+): { text: string; severity: Severity; icon: typeof Activity } {
   if (!currentCycle) {
     return {
       text: "Press play to begin the governance simulation",
@@ -32,7 +31,7 @@ function getNarration(
   const suppression = cycleEvents.find((e) => e.type === "agent_suppressed");
   if (suppression) {
     return {
-      text: `Agent suppressed \u2014 ${domain.driftAgent.replace(/_/g, " ")} removed from active duty. Trust dropped below governance threshold.`,
+      text: `Agent suppressed \u2014 ${domain.driftAgent.replace(/_/g, " ")} removed from active duty. Trust dropped below threshold.`,
       severity: "danger",
       icon: ShieldOff,
     };
@@ -41,7 +40,7 @@ function getNarration(
   const restoration = cycleEvents.find((e) => e.type === "agent_restored");
   if (restoration) {
     return {
-      text: `Agent restored \u2014 ${restoration.agent?.replace(/_/g, " ")} completed probation and returned to active service.`,
+      text: `Agent restored \u2014 ${(restoration.agent ?? "").replace(/_/g, " ")} completed probation and returned to active service.`,
       severity: "success",
       icon: ShieldCheck,
     };
@@ -50,7 +49,7 @@ function getNarration(
   const drift = cycleEvents.find((e) => e.type === "drift_detected");
   if (drift) {
     return {
-      text: `Drift detected \u2014 ${domain.driftAgent.replace(/_/g, " ")} showing anomalous trust trajectory. Monitoring intensified.`,
+      text: `Drift detected \u2014 ${domain.driftAgent.replace(/_/g, " ")} showing anomalous trust trajectory.`,
       severity: "warning",
       icon: AlertTriangle,
     };
@@ -68,46 +67,37 @@ function getNarration(
 
   const phase = currentCycle.phase;
   if (phase.includes("RAMP")) {
-    return {
-      text: "Ramp-up phase \u2014 all agents building trust history on mixed workload",
-      severity: "info",
-      icon: Activity,
-    };
+    return { text: "Ramp-up \u2014 agents building trust history on mixed workload", severity: "info", icon: Activity };
   }
   if (phase.includes("STRESS")) {
-    return {
-      text: "High-risk traffic entering system \u2014 governance monitoring at maximum sensitivity",
-      severity: "warning",
-      icon: AlertTriangle,
-    };
+    return { text: "Stress phase \u2014 high-risk traffic entering system", severity: "warning", icon: AlertTriangle };
   }
   if (phase.includes("RECOVERY")) {
-    return {
-      text: "Recovery phase \u2014 low-risk workload allowing agent rehabilitation",
-      severity: "success",
-      icon: ShieldCheck,
-    };
+    return { text: "Recovery \u2014 low-risk workload allowing agent rehabilitation", severity: "success", icon: ShieldCheck };
   }
 
-  return {
-    text: "Steady state \u2014 governance maintaining optimal agent routing",
-    severity: "info",
-    icon: Activity,
-  };
+  return { text: "Steady state \u2014 governance maintaining optimal routing", severity: "info", icon: Activity };
 }
 
-const severityStyles = {
-  info: "bg-blue-500/[0.06] border-blue-500/15 text-blue-300",
-  warning: "bg-amber-500/[0.06] border-amber-500/15 text-amber-300",
-  danger: "bg-red-500/[0.06] border-red-500/15 text-red-300",
-  success: "bg-emerald-500/[0.06] border-emerald-500/15 text-emerald-300",
+const severityBadge: Record<Severity, "info" | "warning" | "destructive" | "success"> = {
+  info: "info",
+  warning: "warning",
+  danger: "destructive",
+  success: "success",
 };
 
-const severityDot = {
-  info: "bg-blue-400",
-  warning: "bg-amber-400",
-  danger: "bg-red-400",
-  success: "bg-emerald-400",
+const severityBorder: Record<Severity, string> = {
+  info: "border-info/15",
+  warning: "border-warning/15",
+  danger: "border-destructive/15",
+  success: "border-success/15",
+};
+
+const severityBg: Record<Severity, string> = {
+  info: "bg-info/[0.04]",
+  warning: "bg-warning/[0.04]",
+  danger: "bg-destructive/[0.04]",
+  success: "bg-success/[0.04]",
 };
 
 interface NarrationBannerProps {
@@ -116,36 +106,25 @@ interface NarrationBannerProps {
   domain: DomainConfig;
 }
 
-export function NarrationBanner({
-  currentCycle,
-  events,
-  domain,
-}: NarrationBannerProps) {
-  const { text, severity, icon: Icon } = getNarration(
-    currentCycle,
-    events,
-    domain
-  );
+export function NarrationBanner({ currentCycle, events, domain }: NarrationBannerProps) {
+  const { text, severity, icon: Icon } = getNarration(currentCycle, events, domain);
 
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-5 py-3 rounded-xl border transition-all duration-500",
-        severityStyles[severity]
+        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-500",
+        severityBorder[severity],
+        severityBg[severity]
       )}
     >
-      <span
-        className={cn(
-          "w-2 h-2 rounded-full shrink-0",
-          severityDot[severity],
-          severity === "danger" && "animate-pulse"
-        )}
-      />
-      <Icon className="w-4 h-4 shrink-0 opacity-70" />
-      <span className="text-sm font-medium">{text}</span>
+      <Badge variant={severityBadge[severity]} className="shrink-0">
+        <Icon className="w-3 h-3 mr-1" />
+        {severity === "danger" ? "Alert" : severity === "warning" ? "Warning" : severity === "success" ? "OK" : "Info"}
+      </Badge>
+      <span className="text-sm text-foreground">{text}</span>
       {currentCycle && (
-        <span className="ml-auto text-[10px] font-mono opacity-50 shrink-0">
-          CYCLE {currentCycle.cycle}
+        <span className="ml-auto text-[10px] font-mono text-muted-foreground shrink-0">
+          Cycle {currentCycle.cycle}
         </span>
       )}
     </div>

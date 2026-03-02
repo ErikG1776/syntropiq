@@ -11,6 +11,8 @@ import {
   Zap,
   Eye,
 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const domains = [
   {
@@ -68,102 +70,99 @@ export default function LandingPage() {
     <div className="relative min-h-screen">
       {/* Subtle background glow */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-blue-500/[0.04] rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[400px] bg-violet-500/[0.03] rounded-full blur-[100px]" />
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/[0.06] rounded-full blur-[120px]" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6">
+      <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Nav */}
-        <header className="flex items-center justify-between py-6">
+        <header className="flex items-center justify-between py-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-semibold tracking-tight">
               syntropiq
             </span>
           </div>
-          <div className="text-[11px] font-mono text-text-muted bg-surface px-4 py-2 rounded-full border border-border tracking-wider">
+          <span className="text-[11px] font-mono text-muted-foreground">
             INVESTOR DEMO
-          </div>
+          </span>
         </header>
 
         {/* Hero */}
-        <section className="pt-24 pb-20 text-center">
-          <div className="inline-flex items-center gap-2 text-xs font-medium text-blue-400 bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/15 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+        <section className="pt-20 pb-16 text-center">
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20 mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Autonomous AI Governance
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6 max-w-4xl mx-auto">
+          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.1] mb-6 max-w-3xl mx-auto">
             AI agents that{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-violet-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
               govern themselves
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed mb-12">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10">
             Watch multi-agent systems detect drift, suppress failing models,
-            adapt thresholds, and self-heal &mdash; all without human intervention.
+            adapt thresholds, and self-heal &mdash; all without human
+            intervention.
           </p>
 
-          <Link
-            href="/demo"
-            className="group inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-4 rounded-xl text-base transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.25)] hover:shadow-[0_0_60px_rgba(59,130,246,0.35)]"
-          >
-            Launch Live Demo
-            <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+          <Link href="/demo">
+            <Button size="lg" className="shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+              Launch Live Demo
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </Link>
         </section>
 
         {/* Domain Cards */}
-        <section className="pb-20">
+        <section className="pb-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {domains.map((d) => (
-              <div
-                key={d.title}
-                className="panel p-6 hover:border-border-bright transition-all duration-300"
-              >
-                <div
-                  className={`w-10 h-10 rounded-xl ${d.iconBg} flex items-center justify-center mb-5`}
-                >
-                  <d.icon className={`w-5 h-5 ${d.color}`} />
-                </div>
-                <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">
-                  {d.subtitle}
-                </p>
-                <h3 className="text-lg font-semibold mb-2">{d.title}</h3>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  {d.description}
-                </p>
-              </div>
+              <Card key={d.title} className="hover:border-muted-foreground/20 transition-colors">
+                <CardContent className="pt-5">
+                  <div
+                    className={`w-10 h-10 rounded-xl ${d.iconBg} flex items-center justify-center mb-4`}
+                  >
+                    <d.icon className={`w-5 h-5 ${d.color}`} />
+                  </div>
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    {d.subtitle}
+                  </p>
+                  <h3 className="text-base font-semibold mb-2">{d.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {d.description}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
 
         {/* Capabilities */}
-        <section className="pb-24">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold tracking-tight mb-3">
+        <section className="pb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-xl font-bold tracking-tight mb-2">
               How it works
             </h2>
-            <p className="text-sm text-text-secondary max-w-lg mx-auto">
-              Three layers of autonomous governance, running continuously
-              without human oversight.
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Three layers of autonomous governance, running continuously.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {capabilities.map((c, i) => (
               <div key={c.title} className="text-center">
-                <div className="w-12 h-12 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-4">
-                  <c.icon className="w-5 h-5 text-text-secondary" />
+                <div className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center mx-auto mb-4">
+                  <c.icon className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div className="text-[11px] font-mono text-text-muted mb-2">
+                <div className="text-[11px] font-mono text-muted-foreground mb-2">
                   0{i + 1}
                 </div>
-                <h4 className="text-sm font-semibold mb-2">{c.title}</h4>
-                <p className="text-xs text-text-muted leading-relaxed">
+                <h4 className="text-sm font-semibold mb-1.5">{c.title}</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   {c.description}
                 </p>
               </div>
@@ -172,7 +171,7 @@ export default function LandingPage() {
         </section>
 
         {/* Footer */}
-        <footer className="py-8 border-t border-border flex items-center justify-between text-xs text-text-muted">
+        <footer className="py-8 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
           <span>Patent-pending autonomous governance technology</span>
           <span className="font-mono">syntropiq.com</span>
         </footer>
