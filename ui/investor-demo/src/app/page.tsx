@@ -70,68 +70,89 @@ export default function LandingPage() {
     <div className="relative min-h-screen">
       {/* Subtle background glow */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/[0.06] rounded-full blur-[120px]" />
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/[0.04] rounded-full blur-[150px]" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6">
-        {/* Nav */}
-        <header className="flex items-center justify-between py-6 border-b border-border">
+      {/* ── Nav ─────────────────────────────────────────────────── */}
+      <nav className="relative z-10 border-b border-border">
+        <div className="max-w-5xl mx-auto px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">
+            <span className="text-base font-semibold tracking-tight">
               syntropiq
             </span>
           </div>
-          <span className="text-[11px] font-mono text-muted-foreground">
+          <span className="text-[11px] font-mono text-muted-foreground tracking-wider">
             INVESTOR DEMO
           </span>
-        </header>
+        </div>
+      </nav>
 
-        {/* Hero */}
-        <section className="pt-20 pb-16 text-center">
-          <div className="inline-flex items-center gap-2 text-xs font-medium text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20 mb-8">
+      {/* ── Hero (fills viewport) ───────────────────────────────── */}
+      <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 min-h-[calc(100vh-4rem)]">
+        <div className="max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20 mb-10">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Autonomous AI Governance
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.1] mb-6 max-w-3xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-8">
             AI agents that{" "}
             <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-              govern themselves
+              govern themselves.
             </span>
           </h1>
 
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-12">
             Watch multi-agent systems detect drift, suppress failing models,
             adapt thresholds, and self-heal &mdash; all without human
             intervention.
           </p>
 
-          <Link href="/demo">
-            <Button size="lg" className="shadow-[0_0_30px_rgba(59,130,246,0.2)]">
-              Launch Live Demo
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-        </section>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/demo">
+              <Button
+                size="lg"
+                className="shadow-[0_0_30px_rgba(59,130,246,0.2)] hover:shadow-[0_0_50px_rgba(59,130,246,0.3)] transition-shadow"
+              >
+                Launch Live Demo
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
-        {/* Domain Cards */}
-        <section className="pb-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── Domain Cards ────────────────────────────────────────── */}
+      <section className="relative z-10 border-t border-border">
+        <div className="max-w-5xl mx-auto px-6 py-24">
+          <div className="mb-16 max-w-xl">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Live Scenarios
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Three domains. Real governance.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {domains.map((d) => (
-              <Card key={d.title} className="hover:border-muted-foreground/20 transition-colors">
-                <CardContent className="pt-5">
+              <Card
+                key={d.title}
+                className="hover:border-muted-foreground/20 transition-colors"
+              >
+                <CardContent className="p-6">
                   <div
-                    className={`w-10 h-10 rounded-xl ${d.iconBg} flex items-center justify-center mb-4`}
+                    className={`w-10 h-10 rounded-xl ${d.iconBg} flex items-center justify-center mb-5`}
                   >
                     <d.icon className={`w-5 h-5 ${d.color}`} />
                   </div>
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
                     {d.subtitle}
                   </p>
-                  <h3 className="text-base font-semibold mb-2">{d.title}</h3>
+                  <h3 className="text-base font-semibold mb-3">{d.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {d.description}
                   </p>
@@ -139,43 +160,47 @@ export default function LandingPage() {
               </Card>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Capabilities */}
-        <section className="pb-20">
-          <div className="text-center mb-10">
-            <h2 className="text-xl font-bold tracking-tight mb-2">
+      {/* ── How It Works ────────────────────────────────────────── */}
+      <section className="relative z-10 border-t border-border">
+        <div className="max-w-5xl mx-auto px-6 py-24">
+          <div className="text-center mb-16">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Under the Hood
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
               How it works
             </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Three layers of autonomous governance, running continuously.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-4xl mx-auto">
             {capabilities.map((c, i) => (
               <div key={c.title} className="text-center">
-                <div className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-xl bg-card border border-border flex items-center justify-center mx-auto mb-5">
                   <c.icon className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div className="text-[11px] font-mono text-muted-foreground mb-2">
+                <div className="text-[11px] font-mono text-muted-foreground mb-3">
                   0{i + 1}
                 </div>
-                <h4 className="text-sm font-semibold mb-1.5">{c.title}</h4>
+                <h4 className="text-sm font-semibold mb-2">{c.title}</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {c.description}
                 </p>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Footer */}
-        <footer className="py-8 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+      {/* ── Footer ──────────────────────────────────────────────── */}
+      <footer className="relative z-10 border-t border-border">
+        <div className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between text-xs text-muted-foreground">
           <span>Patent-pending autonomous governance technology</span>
           <span className="font-mono">syntropiq.com</span>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
