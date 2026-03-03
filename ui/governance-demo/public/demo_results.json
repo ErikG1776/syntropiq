@@ -1,0 +1,1180 @@
+{
+  "run_id": "GOLD_SUPPRESS_003",
+  "window_minutes": 5,
+  "txn_count_per_cycle": 1000,
+  "cycles": [
+    {
+      "cycle_index": 1,
+      "window_start": "2026-03-02T17:22:59.732867+00:00",
+      "phase": "baseline",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.7,
+        "suppression_threshold": 0.75,
+        "drift_delta": 0.1
+      },
+      "lambda": {
+        "l_cost": 0.24838549428713363,
+        "l_time": 0.24838549428713363,
+        "l_risk": 0.24490809736711378,
+        "l_trust": 0.258320914058619
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.3866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.3866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 2,
+      "window_start": "2026-03-02T17:27:59.732867+00:00",
+      "phase": "baseline",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.7,
+        "suppression_threshold": 0.75,
+        "drift_delta": 0.1
+      },
+      "lambda": {
+        "l_cost": 0.24197320437129435,
+        "l_time": 0.24197320437129435,
+        "l_risk": 0.24491777629528863,
+        "l_trust": 0.2711358149621228
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.3866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.3866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 3,
+      "window_start": "2026-03-02T17:32:59.732867+00:00",
+      "phase": "baseline",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.7,
+        "suppression_threshold": 0.75,
+        "drift_delta": 0.1
+      },
+      "lambda": {
+        "l_cost": 0.2357264533573252,
+        "l_time": 0.2357264533573252,
+        "l_risk": 0.24492720535342286,
+        "l_trust": 0.2836198879319267
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.3866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.3866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 4,
+      "window_start": "2026-03-02T17:37:59.732867+00:00",
+      "phase": "baseline",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.7,
+        "suppression_threshold": 0.75,
+        "drift_delta": 0.1
+      },
+      "lambda": {
+        "l_cost": 0.23045364806314414,
+        "l_time": 0.23045364806314414,
+        "l_risk": 0.24580320057751812,
+        "l_trust": 0.2932895032961935
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.3866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.3866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 5,
+      "window_start": "2026-03-02T17:42:59.732867+00:00",
+      "phase": "baseline",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.7,
+        "suppression_threshold": 0.75,
+        "drift_delta": 0.1
+      },
+      "lambda": {
+        "l_cost": 0.22744893466151395,
+        "l_time": 0.22744893466151395,
+        "l_risk": 0.24901360714117668,
+        "l_trust": 0.29608852353579546
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.3866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.3866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 6,
+      "window_start": "2026-03-02T17:47:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.6799999999999999,
+        "suppression_threshold": 0.73,
+        "drift_delta": 0.08
+      },
+      "lambda": {
+        "l_cost": 0.22510525658065575,
+        "l_time": 0.22510525658065575,
+        "l_risk": 0.2528807452141293,
+        "l_trust": 0.2969087416245593
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.4866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.4866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 7,
+      "window_start": "2026-03-02T17:52:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 1.0,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.6599999999999999,
+        "suppression_threshold": 0.71,
+        "drift_delta": 0.06
+      },
+      "lambda": {
+        "l_cost": 0.22296672511099036,
+        "l_time": 0.22296672511099036,
+        "l_risk": 0.2569165918012261,
+        "l_trust": 0.2971499579767932
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.5866666666666667,
+      "classification": "stable",
+      "consensus_Fs": 0.5866666666666667,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 8,
+      "window_start": "2026-03-02T17:57:59.732867+00:00",
+      "phase": "drift",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha"
+      ],
+      "trust": {
+        "alpha": 0.57,
+        "beta": 0.82,
+        "gamma": 0.84
+      },
+      "suppressed_agents": [],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.06999999999999999
+      },
+      "lambda": {
+        "l_cost": 0.21981240782152914,
+        "l_time": 0.21981240782152914,
+        "l_risk": 0.26461929381483196,
+        "l_trust": 0.29575589054210977
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.3485572139303483,
+      "classification": "stable",
+      "consensus_Fs": 0.3485572139303483,
+      "consensus_disagreement": 0.0
+    },
+    {
+      "cycle_index": 9,
+      "window_start": "2026-03-02T18:02:59.732867+00:00",
+      "phase": "drift",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "gamma"
+      ],
+      "trust": {
+        "alpha": 0.57,
+        "beta": 0.82,
+        "gamma": 0.66
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.07999999999999999
+      },
+      "lambda": {
+        "l_cost": 0.21550236060934227,
+        "l_time": 0.21550236060934227,
+        "l_risk": 0.2790385233478745,
+        "l_trust": 0.28995675543344096
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.004467379574344288,
+      "classification": "degrading",
+      "consensus_Fs": 0.004467379574344288,
+      "consensus_disagreement": 0.002924661500690276
+    },
+    {
+      "cycle_index": 10,
+      "window_start": "2026-03-02T18:07:59.732867+00:00",
+      "phase": "drift",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.57,
+        "beta": 0.78,
+        "gamma": 0.66
+      },
+      "suppressed_agents": [
+        "alpha",
+        "gamma"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.21127682412680615,
+        "l_time": 0.21127682412680615,
+        "l_risk": 0.293175022890073,
+        "l_trust": 0.2842713288563147
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": -0.058865953758988954,
+      "classification": "crisis",
+      "consensus_Fs": -0.058865953758988954,
+      "consensus_disagreement": 0.002924661500690283
+    },
+    {
+      "cycle_index": 11,
+      "window_start": "2026-03-02T18:12:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta",
+        "gamma"
+      ],
+      "trust": {
+        "alpha": 0.57,
+        "beta": 0.98,
+        "gamma": 0.7
+      },
+      "suppressed_agents": [
+        "alpha",
+        "gamma"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.20713414130079033,
+        "l_time": 0.20713414130079033,
+        "l_risk": 0.30703433616673825,
+        "l_trust": 0.27869738123168103
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.021134046241010944,
+      "classification": "degrading",
+      "consensus_Fs": 0.021134046241010944,
+      "consensus_disagreement": 0.0029246615006903037
+    },
+    {
+      "cycle_index": 12,
+      "window_start": "2026-03-02T18:17:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta",
+        "gamma"
+      ],
+      "trust": {
+        "alpha": 0.57,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha",
+        "gamma"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.20579646428295115,
+        "l_time": 0.20579646428295115,
+        "l_risk": 0.32144494403053975,
+        "l_trust": 0.2669621274035579
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.04113404624101095,
+      "classification": "degrading",
+      "consensus_Fs": 0.04113404624101095,
+      "consensus_disagreement": 0.0029246615006903037
+    },
+    {
+      "cycle_index": 13,
+      "window_start": "2026-03-02T18:22:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "alpha",
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.20176123949308936,
+        "l_time": 0.20176123949308936,
+        "l_risk": 0.3347499451279802,
+        "l_trust": 0.26172757588584106
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 14,
+      "window_start": "2026-03-02T18:27:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.200458260797903,
+        "l_time": 0.200458260797903,
+        "l_risk": 0.3489815649557677,
+        "l_trust": 0.2501019134484263
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 15,
+      "window_start": "2026-03-02T18:32:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.19652770666461078,
+        "l_time": 0.19652770666461078,
+        "l_risk": 0.3617466323095762,
+        "l_trust": 0.24519795436120226
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 16,
+      "window_start": "2026-03-02T18:37:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.19267422222020664,
+        "l_time": 0.19267422222020664,
+        "l_risk": 0.3742614042250747,
+        "l_trust": 0.24039015133451203
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 17,
+      "window_start": "2026-03-02T18:42:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.18889629629432023,
+        "l_time": 0.18889629629432023,
+        "l_risk": 0.3865307884559556,
+        "l_trust": 0.23567661895540395
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 18,
+      "window_start": "2026-03-02T18:47:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.18519244734737278,
+        "l_time": 0.18519244734737278,
+        "l_risk": 0.3985595965254467,
+        "l_trust": 0.2310555087798078
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 19,
+      "window_start": "2026-03-02T18:52:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.18156122288958115,
+        "l_time": 0.18156122288958115,
+        "l_risk": 0.4103525456131831,
+        "l_trust": 0.2265250086076547
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 20,
+      "window_start": "2026-03-02T18:57:59.732867+00:00",
+      "phase": "recovery",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.17800119891135407,
+        "l_time": 0.17800119891135407,
+        "l_risk": 0.42191426040508145,
+        "l_trust": 0.22208334177221048
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 21,
+      "window_start": "2026-03-02T19:02:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.17451097932485693,
+        "l_time": 0.17451097932485693,
+        "l_risk": 0.43324927490694254,
+        "l_trust": 0.21772876644334357
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 22,
+      "window_start": "2026-03-02T19:07:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.1710891954165264,
+        "l_time": 0.1710891954165264,
+        "l_risk": 0.4443620342224927,
+        "l_trust": 0.21345957494445447
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 23,
+      "window_start": "2026-03-02T19:12:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.16773450531032,
+        "l_time": 0.16773450531032,
+        "l_risk": 0.4552568962965614,
+        "l_trust": 0.20927409308279848
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 24,
+      "window_start": "2026-03-02T19:17:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.16444559344149018,
+        "l_time": 0.16444559344149018,
+        "l_risk": 0.4659381336240798,
+        "l_trust": 0.20517067949293968
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 25,
+      "window_start": "2026-03-02T19:22:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.16122117004067668,
+        "l_time": 0.16122117004067668,
+        "l_risk": 0.4764099349255685,
+        "l_trust": 0.20114772499307815
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 26,
+      "window_start": "2026-03-02T19:27:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.1580599706281144,
+        "l_time": 0.1580599706281144,
+        "l_risk": 0.48667640678977303,
+        "l_trust": 0.1972036519539982
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 27,
+      "window_start": "2026-03-02T19:32:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.1549607555177592,
+        "l_time": 0.1549607555177592,
+        "l_risk": 0.4967415752840912,
+        "l_trust": 0.19333691368039038
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 28,
+      "window_start": "2026-03-02T19:37:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.15192230933113646,
+        "l_time": 0.15192230933113646,
+        "l_risk": 0.5066093875334227,
+        "l_trust": 0.18954599380430429
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 29,
+      "window_start": "2026-03-02T19:42:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.14894344052072203,
+        "l_time": 0.14894344052072203,
+        "l_risk": 0.5162837132680616,
+        "l_trust": 0.18582940569049444
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    },
+    {
+      "cycle_index": 30,
+      "window_start": "2026-03-02T19:47:59.732867+00:00",
+      "phase": "stabilized",
+      "circuit_breaker": false,
+      "selected_agents": [
+        "beta"
+      ],
+      "trust": {
+        "alpha": 0.61,
+        "beta": 1.0,
+        "gamma": 0.74
+      },
+      "suppressed_agents": [
+        "alpha"
+      ],
+      "thresholds": {
+        "trust_threshold": 0.6699999999999999,
+        "suppression_threshold": 0.72,
+        "drift_delta": 0.08999999999999998
+      },
+      "lambda": {
+        "l_cost": 0.14602298090266866,
+        "l_time": 0.14602298090266866,
+        "l_risk": 0.5257683463412368,
+        "l_trust": 0.18218569185342592
+      },
+      "bayes": {
+        "alpha": 1.0,
+        "beta": 1.0,
+        "posterior_mean": 0.5,
+        "posterior_uncertainty": 0.5,
+        "suggested_risk_multiplier": 1.1500000000000001
+      },
+      "Fs": 0.07237782733553838,
+      "classification": "degrading",
+      "consensus_Fs": 0.07237782733553838,
+      "consensus_disagreement": 0.00292466150069029
+    }
+  ],
+  "final": {
+    "r_score": 1.0,
+    "chains": {
+      "telemetry": true,
+      "optimization": true,
+      "lambda_history": true,
+      "bayes_posteriors": true,
+      "insight_ledger": true,
+      "consensus_ledger": true
+    },
+    "suppression_deadlock": false,
+    "certified": true
+  }
+}
