@@ -27,6 +27,18 @@ def _infer_failure_rate(recent_cycles: Optional[List[Dict[str, Any]]]) -> float:
     return total_fail / denom
 
 
+def _infer_observed_drift(recent_cycles: Optional[List[Dict[str, Any]]], agent_count: int) -> float:
+    """Return the most recent per-agent average trust drop (non-negative)."""
+    if not recent_cycles:
+        return 0.0
+    latest = recent_cycles[-1]
+    delta_total = float(latest.get("trust_delta_total", 0.0))
+    n = max(1, agent_count)
+    per_agent = delta_total / n
+    # Drift is downward movement only; positive deltas are not drift.
+    return max(0.0, -per_agent)
+
+
 def _infer_instability(recent_events: Optional[List[Dict[str, Any]]], thresholds: Dict[str, float]) -> float:
     if not recent_events:
         return 0.0
@@ -85,12 +97,14 @@ def run_reflect(
 
     suppression_count = 1 if suppression_active else 0
     instability = _infer_instability(recent_events, thresholds)
+    observed_drift = _infer_observed_drift(recent_cycles, agent_count=max(1, len(trust_by_agent)))
     penalties, total_penalty = compute_constraint_penalties(
         trust_by_agent=trust_by_agent,
         thresholds=thresholds,
         suppression_count=suppression_count,
         instability=instability,
         latest_replay_score=latest_replay_score,
+        observed_drift=observed_drift,
         specs=constraint_specs,
     )
 
