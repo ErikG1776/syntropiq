@@ -9,10 +9,10 @@ interface DomainScaling {
 
 const SCALING: Record<DomainId, DomainScaling> = {
   fraud: {
-    annualVolume: 250_000_000,
+    annualVolume: 12_000_000,
     baselineRiskRate: 0.003,
     avgLossPerEvent: 185,
-    volumeLabel: "250M transactions/yr",
+    volumeLabel: "12M transactions/yr",
   },
   lending: {
     annualVolume: 48_000,
