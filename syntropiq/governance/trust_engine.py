@@ -40,10 +40,23 @@ class SyntropiqTrustEngine:
             drift_delta: Performance drop threshold for drift detection.
             routing_mode: "deterministic" (top-1) or "competitive" (trust-weighted)
         """
+        suppression_threshold = suppression_threshold if suppression_threshold is not None else trust_threshold
+
+        if not (0.0 < trust_threshold <= 1.0):
+            raise ValueError(f"trust_threshold must be in (0, 1], got {trust_threshold}")
+        if not (0.0 < suppression_threshold <= 1.0):
+            raise ValueError(f"suppression_threshold must be in (0, 1], got {suppression_threshold}")
+        if suppression_threshold < trust_threshold:
+            raise ValueError(
+                f"suppression_threshold ({suppression_threshold}) must be >= trust_threshold ({trust_threshold})"
+            )
+        if drift_delta <= 0.0:
+            raise ValueError(f"drift_delta must be > 0, got {drift_delta}")
+        if routing_mode not in ("deterministic", "competitive"):
+            raise ValueError(f"routing_mode must be 'deterministic' or 'competitive', got {routing_mode!r}")
+
         self.trust_threshold = trust_threshold
-        self.suppression_threshold = (
-            suppression_threshold if suppression_threshold is not None else trust_threshold
-        )
+        self.suppression_threshold = suppression_threshold
         self.drift_delta = drift_delta
         self.state_manager = state_manager
         self.routing_mode = routing_mode
@@ -115,6 +128,7 @@ class SyntropiqTrustEngine:
                     del self.suppressed_agents[agent_id]
                     if agent_id in self.probation_agents:
                         del self.probation_agents[agent_id]
+                    self.drift_warnings.pop(agent_id, None)
                     agent.status = "active"
                     if self.state_manager:
                         self.state_manager.update_agent_status(agent_id, "active")
@@ -220,7 +234,7 @@ class SyntropiqTrustEngine:
             Higher trust still dominates, but all eligible agents execute.
         """
         if self.routing_mode == "competitive" and len(candidates) > 1:
-            weights = [a.trust_score for a in candidates]
+            weights = [max(a.trust_score, 1e-9) for a in candidates]
             return random.choices(candidates, weights=weights, k=1)[0]
         return candidates[0]
 
